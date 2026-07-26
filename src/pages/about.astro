@@ -1,0 +1,56 @@
+---
+import ContentLayout from "@/layouts/ContentLayout.astro";
+import Breadcrumb from "@/components/ui/Breadcrumb.astro";
+---
+
+<ContentLayout
+  meta={{
+    title: "About",
+    description:
+      "Why Qinobee exists: helping institutions connect student success and career programmes.",
+    canonical: "/about",
+  }}
+>
+  <Breadcrumb items={[{ name: "Home", href: "/" }, { name: "About" }]} />
+
+  <h1>About Qinobee</h1>
+
+  <p>
+    Qinobee started from a simple observation. Institutions pour real care into
+    helping students succeed, yet the work is often held back by disconnected
+    tools. A career team here, a mentoring spreadsheet there, a scholarship
+    inbox somewhere else. Each does its job, but none of them talk to one
+    another.
+  </p>
+
+  <p>
+    We build the connective tissue. Our platform brings career, mentoring,
+    internship, scholarship, student life and exchange programmes onto shared
+    foundations, so information is entered once and understood everywhere.
+  </p>
+
+  <h2>What we believe</h2>
+
+  <p>
+    Student success is a team sport. The people who advise, mentor and place
+    students deserve tools that reduce busywork rather than add to it, and
+    leaders deserve a clear view of what is genuinely working. When records are
+    connected, both become possible without anyone spending an afternoon
+    stitching spreadsheets together.
+  </p>
+
+  <h2>How we work</h2>
+
+  <p>
+    We favour clarity over cleverness. Features earn their place by making a
+    real task easier, and every programme should be able to shape the platform
+    to fit the way it already works. We would rather ship something plain that
+    people use every day than something impressive that gathers dust.
+  </p>
+
+  <p>
+    If that resonates, we would love to show you around.
+    <a href="/request-demo">Request a demo</a> and see how the pieces fit
+    together.
+  </p>
+</ContentLayout>

@@ -1,0 +1,139 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Breadcrumb from "@/components/ui/Breadcrumb.astro";
+import Button from "@/components/ui/Button.astro";
+import { solutions, type Solution } from "@/data/solutions";
+import { breadcrumbLd } from "@/lib/seo";
+import {
+  Briefcase,
+  ClipboardList,
+  Users,
+  CalendarHeart,
+  Award,
+  Globe,
+  Check,
+} from "lucide-react";
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  // Only the six solutions that own a dedicated /solutions/<slug> page.
+  const routed = solutions.filter((s) => s.href.startsWith("/solutions/"));
+  return routed.map((solution) => ({
+    params: { slug: solution.slug },
+    props: { solution },
+  }));
+}
+
+interface Props {
+  solution: Solution;
+}
+
+const { solution } = Astro.props;
+
+const ICONS: Record<string, typeof Briefcase> = {
+  Briefcase,
+  ClipboardList,
+  Users,
+  CalendarHeart,
+  Award,
+  Globe,
+};
+const Icon = ICONS[solution.icon] ?? Briefcase;
+
+const COLOR: Record<string, string> = {
+  blue: "bg-[var(--color-blue)]",
+  green: "bg-[var(--color-green)]",
+  pink: "bg-[var(--color-pink)]",
+  purple: "bg-[var(--color-purple)]",
+  orange: "bg-[var(--color-orange)]",
+  yellow: "bg-[var(--color-yellow)]",
+};
+
+const siteUrl = Astro.site?.href ?? import.meta.env.PUBLIC_SITE_URL;
+const base = (siteUrl ?? "http://localhost:4321").replace(/\/+$/, "");
+const jsonLd = breadcrumbLd([
+  { name: "Home", url: `${base}/` },
+  { name: "Solutions", url: `${base}/solutions` },
+  { name: solution.title, url: `${base}/solutions/${solution.slug}` },
+]);
+---
+
+<MarketingLayout
+  meta={{
+    title: solution.title,
+    description: solution.description,
+    canonical: `/solutions/${solution.slug}`,
+  }}
+>
+  <Section>
+    <Container class="flex flex-col gap-10">
+      <Breadcrumb
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Solutions", href: "/solutions" },
+          { name: solution.title },
+        ]}
+      />
+
+      <div class="flex max-w-3xl flex-col gap-5">
+        <span
+          class={`flex h-14 w-14 items-center justify-center rounded-[var(--radius)] border-2 border-[var(--color-ink)] ${COLOR[solution.color]}`}
+        >
+          <Icon size={28} strokeWidth={2.5} aria-hidden="true" />
+        </span>
+        <SectionLabel>SOLUTION</SectionLabel>
+        <h1 class="font-[var(--font-heading)] text-4xl font-bold sm:text-5xl">
+          {solution.title}
+        </h1>
+        <p class="text-lg text-[var(--color-ink)]">{solution.description}</p>
+      </div>
+
+      <div class="flex flex-col gap-5">
+        <h2 class="font-[var(--font-heading)] text-2xl font-bold">
+          What you can do
+        </h2>
+        <ul class="grid gap-4 sm:grid-cols-2">
+          {
+            solution.capabilities.map((cap) => (
+              <li class="neo-card flex items-start gap-3">
+                <span
+                  class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border-2 border-[var(--color-ink)] bg-[var(--color-green)]"
+                  aria-hidden="true"
+                >
+                  <Check size={16} strokeWidth={3} />
+                </span>
+                <span class="font-medium">{cap}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div
+        class="neo-card flex flex-col gap-4 bg-[var(--color-yellow)] sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div class="flex flex-col gap-1">
+          <h2 class="font-[var(--font-heading)] text-2xl font-bold">
+            See {solution.title} in action
+          </h2>
+          <p class="text-[var(--color-ink)]">
+            Book a walkthrough tailored to your institution.
+          </p>
+        </div>
+        <Button href="/request-demo" variant="primary" size="lg"
+          >Request a demo</Button
+        >
+      </div>
+    </Container>
+  </Section>
+
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(jsonLd)}
+    is:inline
+  />
+</MarketingLayout>

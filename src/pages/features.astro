@@ -1,0 +1,113 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Breadcrumb from "@/components/ui/Breadcrumb.astro";
+import Button from "@/components/ui/Button.astro";
+import {
+  Layers,
+  ShieldCheck,
+  BarChart3,
+  Puzzle,
+  Workflow,
+  FileText,
+} from "lucide-react";
+
+const platform = [
+  {
+    title: "One connected record",
+    icon: Layers,
+    color: "bg-[var(--color-blue)]",
+    body: "Every programme writes to the same student profile, so information is entered once and read everywhere.",
+  },
+  {
+    title: "Outcome analytics",
+    icon: BarChart3,
+    color: "bg-[var(--color-orange)]",
+    body: "Participation and results roll up into dashboards you can share with leadership without a spreadsheet in sight.",
+  },
+  {
+    title: "Workflows that fit",
+    icon: Workflow,
+    color: "bg-[var(--color-green)]",
+    body: "Approvals, check-ins and reviews follow the steps your institution already uses, not a process forced on you.",
+  },
+  {
+    title: "Configurable by design",
+    icon: Puzzle,
+    color: "bg-[var(--color-purple)]",
+    body: "Forms, fields and stages adapt to each programme so the platform bends to your work rather than the reverse.",
+  },
+  {
+    title: "Resume and career tools",
+    icon: FileText,
+    color: "bg-[var(--color-pink)]",
+    body: "Students get a live resume editor with scoring and job matching, so they graduate ready to apply with confidence.",
+  },
+  {
+    title: "Security you can explain",
+    icon: ShieldCheck,
+    color: "bg-[var(--color-yellow)]",
+    body: "Clear access controls and a single source of truth make it straightforward to answer where student data lives.",
+  },
+];
+---
+
+<MarketingLayout
+  meta={{
+    title: "Features",
+    description:
+      "A connected platform for student success: shared records, outcome analytics, flexible workflows and career tools.",
+    canonical: "/features",
+  }}
+>
+  <Section>
+    <Container class="flex flex-col gap-10">
+      <Breadcrumb
+        items={[{ name: "Home", href: "/" }, { name: "Features" }]}
+      />
+      <div class="flex max-w-3xl flex-col gap-4">
+        <SectionLabel>THE PLATFORM</SectionLabel>
+        <h1 class="font-[var(--font-heading)] text-4xl font-bold sm:text-5xl">
+          Built to connect every programme, not just one.
+        </h1>
+        <p class="text-lg text-[var(--color-ink)]">
+          Qinobee brings your career, mentoring, internship, scholarship and
+          student life programmes onto shared foundations. The result is less
+          duplicated effort and a clearer view of what is actually working.
+        </p>
+      </div>
+
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          platform.map((f) => {
+            const Icon = f.icon;
+            return (
+              <div class="neo-card flex h-full flex-col gap-4">
+                <span
+                  class={`flex h-12 w-12 items-center justify-center rounded-[var(--radius)] border-2 border-[var(--color-ink)] ${f.color}`}
+                >
+                  <Icon size={24} strokeWidth={2.5} aria-hidden="true" />
+                </span>
+                <h2 class="font-[var(--font-heading)] text-xl font-bold">
+                  {f.title}
+                </h2>
+                <p class="text-[var(--color-ink)]">{f.body}</p>
+              </div>
+            );
+          })
+        }
+      </div>
+
+      <div class="flex flex-wrap gap-4">
+        <Button href="/request-demo" variant="primary" size="lg"
+          >Request a demo</Button
+        >
+        <Button href="/solutions" variant="secondary" size="lg"
+          >Browse solutions</Button
+        >
+      </div>
+    </Container>
+  </Section>
+</MarketingLayout>

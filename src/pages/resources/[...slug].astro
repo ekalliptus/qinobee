@@ -1,0 +1,60 @@
+---
+import { render } from "astro:content";
+import ContentLayout from "@/layouts/ContentLayout.astro";
+import Badge from "@/components/ui/Badge.astro";
+import Breadcrumb from "@/components/ui/Breadcrumb.astro";
+import { getPublishedResources, TYPE_LABEL, TYPE_TONE } from "@/lib/content";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const resources = await getPublishedResources();
+  return resources.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const { data } = entry;
+
+const dateLabel = data.publishedAt.toLocaleDateString("en-GB", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+});
+---
+
+<ContentLayout
+  meta={{
+    title: data.title,
+    description: data.description,
+    canonical: `/resources/${entry.id}`,
+    ogImage: data.cover,
+    type: "article",
+  }}
+>
+  <Breadcrumb
+    items={[
+      { name: "Home", href: "/" },
+      { name: "Resources", href: "/resources" },
+      { name: data.title },
+    ]}
+  />
+
+  <div class="not-prose my-6 flex items-center gap-3">
+    <Badge tone={TYPE_TONE[data.type] as any}>{TYPE_LABEL[data.type]}</Badge>
+    <time datetime={data.publishedAt.toISOString()} class="text-sm font-mono">
+      {dateLabel}
+    </time>
+  </div>
+
+  <h1>{data.title}</h1>
+  <p class="text-lg"><em>{data.description}</em></p>
+  <p class="text-sm">By {data.author}</p>
+
+  <hr />
+
+  <Content />
+</ContentLayout>

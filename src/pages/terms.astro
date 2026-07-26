@@ -1,0 +1,63 @@
+---
+import ContentLayout from "@/layouts/ContentLayout.astro";
+import Breadcrumb from "@/components/ui/Breadcrumb.astro";
+import { siteConfig } from "@/config/site";
+
+const updated = "26 July 2026";
+---
+
+<ContentLayout
+  meta={{
+    title: "Terms of Service",
+    description:
+      "The terms that govern your use of the Qinobee website and services.",
+    canonical: "/terms",
+  }}
+>
+  <Breadcrumb items={[{ name: "Home", href: "/" }, { name: "Terms" }]} />
+
+  <h1>Terms of Service</h1>
+  <p><em>Last updated: {updated}</em></p>
+
+  <p>
+    <strong>This page is provided for general information only and is not
+    legal advice.</strong> It sets out, in plain language, the basis on which
+    we intend to make this website available. For advice about your specific
+    circumstances, please consult a qualified professional.
+  </p>
+
+  <h2>Using this website</h2>
+  <p>
+    You may use this website for lawful purposes and in a way that does not
+    infringe the rights of, or restrict the use of, this site by anyone else.
+    We may update or change the content of the site at any time without notice.
+  </p>
+
+  <h2>Intellectual property</h2>
+  <p>
+    The content on this site, including text, design and graphics, belongs to us
+    or our licensors. You may view and share it for personal, non-commercial
+    use, but you may not reproduce it for commercial purposes without our
+    permission.
+  </p>
+
+  <h2>No warranties</h2>
+  <p>
+    We aim to keep the information on this site accurate and up to date, but we
+    provide it on an "as is" basis without warranties of any kind. We are not
+    responsible for decisions made in reliance on the content of this site.
+  </p>
+
+  <h2>Links to other sites</h2>
+  <p>
+    This site may link to third-party websites we do not control. We include
+    those links for convenience and are not responsible for their content or
+    practices.
+  </p>
+
+  <h2>Contact us</h2>
+  <p>
+    If you have questions about these terms, please email
+    <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>.
+  </p>
+</ContentLayout>

@@ -1,0 +1,54 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Breadcrumb from "@/components/ui/Breadcrumb.astro";
+import Alert from "@/components/ui/Alert.astro";
+import ResourceCard from "@/components/ui/ResourceCard.astro";
+import { getResourcesByType } from "@/lib/content";
+
+const resources = await getResourcesByType("blog");
+---
+
+<MarketingLayout
+  meta={{
+    title: "Blog",
+    description:
+      "Articles on running connected student success, career, mentoring and scholarship programmes.",
+    canonical: "/resources/blog",
+  }}
+>
+  <Section>
+    <Container class="flex flex-col gap-10">
+      <Breadcrumb
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Resources", href: "/resources" },
+          { name: "Blog" },
+        ]}
+      />
+      <div class="flex max-w-3xl flex-col gap-4">
+        <SectionLabel>BLOG</SectionLabel>
+        <h1 class="font-[var(--font-heading)] text-4xl font-bold sm:text-5xl">
+          Articles for student success teams.
+        </h1>
+      </div>
+
+      {
+        resources.length === 0 ? (
+          <Alert tone="info" title="Nothing here yet">
+            There are no blog articles published right now. Please check back
+            soon.
+          </Alert>
+        ) : (
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {resources.map((entry) => (
+              <ResourceCard entry={entry} />
+            ))}
+          </div>
+        )
+      }
+    </Container>
+  </Section>
+</MarketingLayout>
