@@ -18,7 +18,7 @@ export const solutionsNav: NavLink[] = [
 	{ label: "International Exchange", href: "/solutions/international-exchange" },
 ];
 
-export const primaryNav: NavGroup[] = [
+export const headerNav: NavGroup[] = [
 	{ label: "Solutions", links: solutionsNav },
 	{
 		label: "Product",
