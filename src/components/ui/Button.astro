@@ -1,0 +1,109 @@
+---
+import { buttonClasses } from "./button-classes";
+import type { ButtonVariant, ButtonSize } from "./button-classes";
+
+interface Props {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  href?: string;
+  type?: "button" | "submit";
+  disabled?: boolean;
+  loading?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  variant = "primary",
+  size = "md",
+  href,
+  type = "button",
+  disabled = false,
+  loading = false,
+  class: className = "",
+  ...rest
+} = Astro.props;
+
+const cls = [buttonClasses(variant, size), className].join(" ").trim();
+const isDisabled = disabled || loading;
+---
+
+{
+  href ? (
+    <a
+      href={isDisabled ? undefined : href}
+      class={cls}
+      aria-busy={loading ? "true" : undefined}
+      aria-disabled={isDisabled ? "true" : undefined}
+      {...rest}
+    >
+      {loading && (
+        <svg
+          class="neo-spinner"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-dasharray="42"
+          />
+        </svg>
+      )}
+      <slot />
+    </a>
+  ) : (
+    <button
+      type={type}
+      class={cls}
+      disabled={isDisabled}
+      aria-busy={loading ? "true" : undefined}
+      {...rest}
+    >
+      {loading && (
+        <svg
+          class="neo-spinner"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-dasharray="42"
+          />
+        </svg>
+      )}
+      <slot />
+    </button>
+  )
+}
+
+<style>
+  .neo-spinner {
+    animation: neo-spin 0.8s linear infinite;
+  }
+  @keyframes neo-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .neo-spinner {
+      animation: none;
+    }
+  }
+</style>

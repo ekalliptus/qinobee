@@ -1,0 +1,42 @@
+---
+type Tone = "info" | "success" | "warning" | "danger";
+
+interface Props {
+  tone?: Tone;
+  title?: string;
+  class?: string;
+}
+
+const { tone = "info", title, class: className = "" } = Astro.props;
+
+// symbol + label prefix so tone is not conveyed by color alone.
+const MAP: Record<Tone, { bg: string; symbol: string; label: string }> = {
+  info: { bg: "bg-[var(--color-blue)]", symbol: "i", label: "Info" },
+  success: { bg: "bg-[var(--color-green)]", symbol: "✓", label: "Success" },
+  warning: { bg: "bg-[var(--color-yellow)]", symbol: "!", label: "Warning" },
+  danger: { bg: "bg-[var(--color-red)]", symbol: "×", label: "Error" },
+};
+
+const meta = MAP[tone];
+const role = tone === "warning" || tone === "danger" ? "alert" : "status";
+const cls = [
+  "flex gap-3 border-2 border-[var(--color-ink)] rounded-[var(--radius)] p-4 shadow-[var(--shadow-sm)] text-[var(--color-ink)]",
+  meta.bg,
+  className,
+]
+  .join(" ")
+  .trim();
+---
+
+<div class={cls} role={role}>
+  <span
+    aria-hidden="true"
+    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border-2 border-[var(--color-ink)] bg-[var(--color-white)] font-mono text-sm font-bold"
+    >{meta.symbol}</span
+  >
+  <div class="flex flex-col gap-1">
+    <span class="sr-only">{meta.label}:</span>
+    {title && <strong class="font-semibold">{title}</strong>}
+    <div><slot /></div>
+  </div>
+</div>

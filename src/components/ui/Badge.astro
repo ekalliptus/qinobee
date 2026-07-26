@@ -1,0 +1,39 @@
+---
+type BadgeTone =
+  | "muted"
+  | "yellow"
+  | "blue"
+  | "pink"
+  | "green"
+  | "orange"
+  | "purple"
+  | "red";
+
+interface Props {
+  tone?: BadgeTone;
+  class?: string;
+}
+
+const { tone = "muted", class: className = "" } = Astro.props;
+
+const TONE: Record<BadgeTone, string> = {
+  muted: "bg-[var(--color-muted)]",
+  yellow: "bg-[var(--color-yellow)]",
+  blue: "bg-[var(--color-blue)]",
+  pink: "bg-[var(--color-pink)]",
+  green: "bg-[var(--color-green)]",
+  orange: "bg-[var(--color-orange)]",
+  purple: "bg-[var(--color-purple)]",
+  red: "bg-[var(--color-red)]",
+};
+
+const cls = [
+  "inline-flex items-center gap-1 border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] px-2 py-0.5 text-xs font-semibold text-[var(--color-ink)]",
+  TONE[tone],
+  className,
+]
+  .join(" ")
+  .trim();
+---
+
+<span class={cls}><slot /></span>

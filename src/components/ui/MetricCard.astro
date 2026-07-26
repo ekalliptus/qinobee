@@ -1,0 +1,22 @@
+---
+import Badge from "./Badge.astro";
+
+interface Props {
+  value: string;
+  label: string;
+  demo?: boolean;
+  class?: string;
+}
+
+const { value, label, demo = false, class: className = "" } = Astro.props;
+
+const cls = ["neo-card flex flex-col gap-1", className].join(" ").trim();
+---
+
+<div class={cls}>
+  <div class="flex items-center justify-between gap-2">
+    <span class="text-sm font-medium text-[var(--color-ink)]">{label}</span>
+    {demo && <Badge tone="muted">Illustrative</Badge>}
+  </div>
+  <span class="font-[var(--font-heading)] text-3xl font-bold">{value}</span>
+</div>
