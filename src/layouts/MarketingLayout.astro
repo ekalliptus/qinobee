@@ -1,0 +1,25 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import { siteConfig } from "@/config/site";
+import type { MetaInput } from "@/lib/seo";
+
+interface Props {
+	meta: MetaInput;
+}
+
+const { meta } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<BaseLayout meta={meta}>
+	<!-- Placeholder header — replaced by Header component in Task 1.2 -->
+	<header>
+		<a href="/">{siteConfig.name}</a>
+		<a href={siteConfig.demoUrl}>Request Demo</a>
+	</header>
+	<main id="main-content">
+		<slot />
+	</main>
+	<!-- Placeholder footer — replaced by Footer component in Task 1.2 -->
+	<footer>&copy; {year} {siteConfig.name}</footer>
+</BaseLayout>
