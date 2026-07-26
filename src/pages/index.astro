@@ -1,8 +1,65 @@
 ---
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Hero from "@/components/sections/Hero.astro";
+import LogoStrip from "@/components/sections/LogoStrip.astro";
+import ProblemSection from "@/components/sections/ProblemSection.astro";
+import SolutionEcosystem from "@/components/sections/SolutionEcosystem.astro";
+import ResumeShowcase from "@/components/sections/ResumeShowcase.astro";
+import WorkflowSteps from "@/components/sections/WorkflowSteps.astro";
+import Outcomes from "@/components/sections/Outcomes.astro";
+import Customisation from "@/components/sections/Customisation.astro";
+import Security from "@/components/sections/Security.astro";
+import SuccessStory from "@/components/sections/SuccessStory.astro";
+import ResourcesTeaser from "@/components/sections/ResourcesTeaser.astro";
+import Faq from "@/components/sections/Faq.astro";
+import FinalCta from "@/components/sections/FinalCta.astro";
+import ProductTabs from "@/components/interactive/ProductTabs.tsx";
+import { websiteLd, softwareApplicationLd } from "@/lib/seo";
+
+const siteUrl = Astro.site?.href ?? import.meta.env.PUBLIC_SITE_URL;
+const websiteJsonLd = websiteLd(siteUrl);
+const softwareJsonLd = softwareApplicationLd(siteUrl);
 ---
 
 <MarketingLayout meta={{ title: "Home", canonical: "/" }}>
-	<h1>Qinobee</h1>
-	<p>An integrated student success and career development platform.</p>
+	<Hero />
+	<LogoStrip />
+	<ProblemSection />
+	<SolutionEcosystem />
+	<ResumeShowcase />
+	<WorkflowSteps />
+
+	<Section class="bg-[var(--color-pink)] border-y-2 border-[var(--color-ink)]">
+		<Container class="flex flex-col gap-10">
+			<div class="flex max-w-3xl flex-col gap-4">
+				<SectionLabel>BUILT FOR EVERYONE</SectionLabel>
+				<h2 class="font-[var(--font-heading)] text-3xl font-bold sm:text-4xl">
+					One platform, a clear view for every role.
+				</h2>
+			</div>
+			<ProductTabs client:visible />
+		</Container>
+	</Section>
+
+	<Outcomes />
+	<Customisation />
+	<Security />
+	<SuccessStory />
+	<ResourcesTeaser />
+	<Faq />
+	<FinalCta />
+
+	<script
+		type="application/ld+json"
+		set:html={JSON.stringify(websiteJsonLd)}
+		is:inline
+	/>
+	<script
+		type="application/ld+json"
+		set:html={JSON.stringify(softwareJsonLd)}
+		is:inline
+	/>
 </MarketingLayout>

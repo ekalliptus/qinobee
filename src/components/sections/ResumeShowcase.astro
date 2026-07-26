@@ -1,0 +1,79 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Button from "@/components/ui/Button.astro";
+import Badge from "@/components/ui/Badge.astro";
+import ScoreRing from "@/components/ui/ScoreRing.astro";
+---
+
+<Section class="bg-[var(--color-blue)] border-y-2 border-[var(--color-ink)]">
+	<Container class="flex flex-col gap-10">
+		<div class="flex max-w-3xl flex-col gap-4">
+			<SectionLabel>RESUME & CAREER TOOLS</SectionLabel>
+			<h2 class="font-[var(--font-heading)] text-3xl font-bold sm:text-4xl">
+				Help every student build a stronger career profile.
+			</h2>
+		</div>
+
+		<div class="grid gap-5 lg:grid-cols-2">
+			<div class="neo-card flex flex-col gap-3">
+				<h3 class="font-[var(--font-heading)] text-xl font-bold">
+					Live resume editor
+				</h3>
+				<p>
+					Students build their resume in structured sections and see changes take
+					shape as they type, with no formatting headaches.
+				</p>
+				<div class="flex flex-col gap-2 rounded-[var(--radius)] border-2 border-[var(--color-ink)] bg-[var(--color-paper)] p-3">
+					<span class="h-3 w-2/3 rounded bg-[var(--color-muted)]"></span>
+					<span class="h-3 w-full rounded bg-[var(--color-muted)]"></span>
+					<span class="h-3 w-4/5 rounded bg-[var(--color-muted)]"></span>
+				</div>
+			</div>
+
+			<div class="neo-card flex items-center gap-5">
+				<ScoreRing score={78} size={96} label="Resume score 78 of 100" />
+				<div class="flex flex-col gap-2">
+					<h3 class="font-[var(--font-heading)] text-xl font-bold">
+						Resume score
+					</h3>
+					<p>
+						A clear score shows how ready a resume is, so students know exactly
+						what to improve before applying.
+					</p>
+					<Badge tone="muted">Illustrative score</Badge>
+				</div>
+			</div>
+
+			<div class="neo-card flex flex-col gap-3">
+				<h3 class="font-[var(--font-heading)] text-xl font-bold">
+					Phrase improvement
+				</h3>
+				<p>
+					Suggestions turn plain descriptions into sharper, results-focused lines
+					that stand out to employers.
+				</p>
+			</div>
+
+			<div class="neo-card flex flex-col gap-3">
+				<h3 class="font-[var(--font-heading)] text-xl font-bold">
+					Job description matcher
+				</h3>
+				<p>
+					Students paste a job description and see how their resume aligns, with
+					gaps highlighted so they can tailor each application.
+				</p>
+			</div>
+		</div>
+
+		<div class="flex flex-wrap gap-4">
+			<Button variant="dark" size="lg" href="/app/resume">
+				Build a CV
+			</Button>
+			<Button variant="secondary" size="lg" href="/app/resume">
+				Check resume score
+			</Button>
+		</div>
+	</Container>
+</Section>

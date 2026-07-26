@@ -1,0 +1,63 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+
+const steps = [
+	{
+		title: "Discover",
+		body: "Students explore programmes, jobs, mentors and events in one place.",
+	},
+	{
+		title: "Apply",
+		body: "Applications and sign-ups run through configurable forms.",
+	},
+	{
+		title: "Approve",
+		body: "Staff review and approve requests with clear status at every step.",
+	},
+	{
+		title: "Participate",
+		body: "Students take part in internships, mentoring and activities.",
+	},
+	{
+		title: "Track",
+		body: "Progress, hours and check-ins are recorded as work happens.",
+	},
+	{
+		title: "Report",
+		body: "Participation and outcomes roll up into shareable dashboards.",
+	},
+	{
+		title: "Improve",
+		body: "Teams use the insight to refine programmes for the next cohort.",
+	},
+];
+---
+
+<Section>
+	<Container class="flex flex-col gap-10">
+		<div class="flex max-w-3xl flex-col gap-4">
+			<SectionLabel>HOW IT WORKS</SectionLabel>
+			<h2 class="font-[var(--font-heading)] text-3xl font-bold sm:text-4xl">
+				A single workflow from first click to final report.
+			</h2>
+		</div>
+
+		<ol class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			{
+				steps.map((step, index) => (
+					<li class="neo-card flex h-full flex-col gap-2">
+						<span class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[var(--color-ink)] bg-[var(--color-yellow)] font-[var(--font-heading)] font-bold">
+							{index + 1}
+						</span>
+						<h3 class="font-[var(--font-heading)] text-lg font-bold">
+							{step.title}
+						</h3>
+						<p class="text-sm text-[var(--color-ink)]">{step.body}</p>
+					</li>
+				))
+			}
+		</ol>
+	</Container>
+</Section>

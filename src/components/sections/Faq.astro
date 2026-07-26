@@ -1,0 +1,51 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import { faqs } from "@/data/faqs";
+import { faqLd } from "@/lib/seo";
+
+const faqJsonLd = faqLd(faqs);
+---
+
+<Section id="faq">
+	<Container class="flex flex-col gap-10">
+		<div class="flex max-w-3xl flex-col gap-4">
+			<SectionLabel>FAQ</SectionLabel>
+			<h2 class="font-[var(--font-heading)] text-3xl font-bold sm:text-4xl">
+				Questions institutions ask us.
+			</h2>
+		</div>
+
+		<div class="flex flex-col gap-4">
+			{
+				faqs.map((faq) => (
+					<details class="neo-card group">
+						<summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-[var(--font-heading)] text-lg font-bold">
+							{faq.question}
+							<span
+								aria-hidden="true"
+								class="shrink-0 font-mono text-2xl transition-transform group-open:rotate-45"
+							>
+								+
+							</span>
+						</summary>
+						<p class="mt-4 text-[var(--color-ink)]">{faq.answer}</p>
+					</details>
+				))
+			}
+		</div>
+	</Container>
+</Section>
+
+<script
+	type="application/ld+json"
+	set:html={JSON.stringify(faqJsonLd)}
+	is:inline
+/>
+
+<style>
+	details > summary::-webkit-details-marker {
+		display: none;
+	}
+</style>

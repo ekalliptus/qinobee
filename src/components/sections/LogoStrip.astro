@@ -1,0 +1,32 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+
+// Placeholder institution names only — no real logos or real institutions.
+const institutions = [
+	"Northfield University",
+	"Pacific School",
+	"Meridian College",
+	"Horizon Institute",
+	"FutureWorks Academy",
+];
+---
+
+<Section class="py-10 sm:py-12">
+	<Container class="flex flex-col items-center gap-6">
+		<p class="text-sm font-semibold uppercase tracking-widest text-[var(--color-ink)]">
+			Built for institutions like these (illustrative)
+		</p>
+		<ul class="flex flex-wrap items-center justify-center gap-3">
+			{
+				institutions.map((name) => (
+					<li
+						class="border-2 border-[var(--color-ink)] bg-[var(--color-white)] px-4 py-2 text-sm font-bold shadow-[var(--shadow-sm)]"
+					>
+						{name}
+					</li>
+				))
+			}
+		</ul>
+	</Container>
+</Section>

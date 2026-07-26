@@ -1,0 +1,56 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+
+// No certification or compliance claims — only capabilities the platform provides.
+const items = [
+	{
+		title: "Role-based access",
+		body: "People see only the data their role needs, and nothing more.",
+	},
+	{
+		title: "Audit logs",
+		body: "Key actions are recorded so you can trace what changed and when.",
+	},
+	{
+		title: "Permission settings",
+		body: "Fine-grained controls let you tune access down to specific areas.",
+	},
+	{
+		title: "Secure transfer",
+		body: "Data moves over encrypted connections between browser and platform.",
+	},
+	{
+		title: "Backups",
+		body: "Regular backups help protect your records against data loss.",
+	},
+	{
+		title: "Privacy-conscious workflows",
+		body: "Processes are designed to handle student information responsibly.",
+	},
+];
+---
+
+<Section class="bg-[var(--color-ink)] text-[var(--color-paper)] border-y-2 border-[var(--color-ink)]">
+	<Container class="flex flex-col gap-10">
+		<div class="flex max-w-3xl flex-col gap-4">
+			<SectionLabel class="text-[var(--color-paper)]">SECURITY & PRIVACY</SectionLabel>
+			<h2 class="font-[var(--font-heading)] text-3xl font-bold sm:text-4xl">
+				Student data handled with care.
+			</h2>
+		</div>
+		<ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			{
+				items.map((item) => (
+					<li class="flex h-full flex-col gap-2 rounded-[var(--radius)] border-2 border-[var(--color-paper)] bg-[var(--color-ink)] p-6">
+						<h3 class="font-[var(--font-heading)] text-lg font-bold text-[var(--color-paper)]">
+							{item.title}
+						</h3>
+						<p class="text-sm text-[var(--color-paper)]/90">{item.body}</p>
+					</li>
+				))
+			}
+		</ul>
+	</Container>
+</Section>

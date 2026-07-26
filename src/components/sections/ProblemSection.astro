@@ -1,0 +1,36 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+
+const problems = [
+	"Programme data lives in scattered spreadsheets that never quite agree.",
+	"Approvals crawl through long email chains with no clear status.",
+	"Students bounce between too many separate portals and logins.",
+	"Reporting is stitched together by hand every single term.",
+	"Information is not shared across departments, so teams work blind.",
+	"Engagement is hard to measure when nothing is recorded in one place.",
+	"Students struggle to prepare strong CVs without proper guidance.",
+	"Career outcomes go unmeasured, so success stories stay invisible.",
+];
+---
+
+<Section class="bg-[var(--color-muted)] border-y-2 border-[var(--color-ink)]">
+	<Container class="flex flex-col gap-10">
+		<div class="flex flex-col gap-4">
+			<SectionLabel>THE PROBLEM</SectionLabel>
+			<h2 class="max-w-3xl font-[var(--font-heading)] text-3xl font-bold sm:text-4xl">
+				Your programmes are connected. Your software should be too.
+			</h2>
+		</div>
+		<ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			{
+				problems.map((problem) => (
+					<li class="neo-card h-full text-[var(--color-ink)]">
+						<span class="text-base font-medium">{problem}</span>
+					</li>
+				))
+			}
+		</ul>
+	</Container>
+</Section>

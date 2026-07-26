@@ -1,0 +1,26 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import Button from "@/components/ui/Button.astro";
+import { siteConfig } from "@/config/site";
+---
+
+<Section class="bg-[var(--color-yellow)] border-y-2 border-[var(--color-ink)]">
+	<Container class="flex flex-col items-center gap-6 text-center">
+		<h2 class="max-w-3xl font-[var(--font-heading)] text-3xl font-bold sm:text-4xl lg:text-5xl">
+			Ready to simplify student success operations?
+		</h2>
+		<p class="max-w-2xl text-lg text-[var(--color-ink)]">
+			See how every programme fits together in one platform, built around the way
+			your institution already works.
+		</p>
+		<div class="flex flex-wrap justify-center gap-4">
+			<Button variant="dark" size="lg" href={siteConfig.demoUrl}>
+				Request Demo
+			</Button>
+			<Button variant="secondary" size="lg" href={`mailto:${siteConfig.email}`}>
+				Talk to our team
+			</Button>
+		</div>
+	</Container>
+</Section>

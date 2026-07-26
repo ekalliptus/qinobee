@@ -1,0 +1,63 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+
+const outcomes = [
+	{
+		title: "Clearer career direction",
+		body: "Students see opportunities and next steps instead of guessing.",
+	},
+	{
+		title: "Stronger applications",
+		body: "Resume tools help students present themselves with confidence.",
+	},
+	{
+		title: "More internships completed",
+		body: "Structured tracking keeps placements moving to the finish line.",
+	},
+	{
+		title: "Meaningful mentoring",
+		body: "Consistent scheduling and notes make every session count.",
+	},
+	{
+		title: "Higher engagement",
+		body: "Events and activities in one place invite more participation.",
+	},
+	{
+		title: "Fairer scholarships",
+		body: "Transparent review helps the right students get support.",
+	},
+	{
+		title: "Measurable outcomes",
+		body: "Career results are recorded, so progress is finally visible.",
+	},
+	{
+		title: "Less staff busywork",
+		body: "Shared data removes duplicate entry and manual reporting.",
+	},
+];
+---
+
+<Section class="bg-[var(--color-green)] border-y-2 border-[var(--color-ink)]">
+	<Container class="flex flex-col gap-10">
+		<div class="flex max-w-3xl flex-col gap-4">
+			<SectionLabel>OUTCOMES</SectionLabel>
+			<h2 class="font-[var(--font-heading)] text-3xl font-bold sm:text-4xl">
+				Career-ready students and outcomes you can prove.
+			</h2>
+		</div>
+		<ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			{
+				outcomes.map((outcome) => (
+					<li class="neo-card flex h-full flex-col gap-2">
+						<h3 class="font-[var(--font-heading)] text-lg font-bold">
+							{outcome.title}
+						</h3>
+						<p class="text-sm text-[var(--color-ink)]">{outcome.body}</p>
+					</li>
+				))
+			}
+		</ul>
+	</Container>
+</Section>
