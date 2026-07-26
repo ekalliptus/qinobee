@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
-import { siteConfig } from "@/config/site";
+import AnnouncementBar from "@/components/layout/AnnouncementBar.astro";
+import Header from "@/components/layout/Header.astro";
+import Footer from "@/components/layout/Footer.astro";
 import type { MetaInput } from "@/lib/seo";
 
 interface Props {
@@ -8,18 +10,13 @@ interface Props {
 }
 
 const { meta } = Astro.props;
-const year = new Date().getFullYear();
 ---
 
 <BaseLayout meta={meta}>
-	<!-- Placeholder header — replaced by Header component in Task 1.2 -->
-	<header>
-		<a href="/">{siteConfig.name}</a>
-		<a href={siteConfig.demoUrl}>Request Demo</a>
-	</header>
+	<AnnouncementBar />
+	<Header />
 	<main id="main-content">
 		<slot />
 	</main>
-	<!-- Placeholder footer — replaced by Footer component in Task 1.2 -->
-	<footer>&copy; {year} {siteConfig.name}</footer>
+	<Footer />
 </BaseLayout>

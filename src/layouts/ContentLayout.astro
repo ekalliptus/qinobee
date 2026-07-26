@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
-import { siteConfig } from "@/config/site";
+import Header from "@/components/layout/Header.astro";
+import Footer from "@/components/layout/Footer.astro";
 import type { MetaInput } from "@/lib/seo";
 
 interface Props {
@@ -8,19 +9,14 @@ interface Props {
 }
 
 const { meta } = Astro.props;
-const year = new Date().getFullYear();
 ---
 
 <BaseLayout meta={meta}>
-	<!-- Placeholder header — replaced by Header component in Task 1.2 -->
-	<header>
-		<a href="/">{siteConfig.name}</a>
-	</header>
+	<Header />
 	<main id="main-content">
-		<article style="max-width: 72ch; margin-inline: auto; padding-inline: 1rem;">
+		<article style="max-width: 72ch; margin-inline: auto; padding-inline: 1rem; padding-block: 3rem;">
 			<slot />
 		</article>
 	</main>
-	<!-- Placeholder footer — replaced by Footer component in Task 1.2 -->
-	<footer>&copy; {year} {siteConfig.name}</footer>
+	<Footer />
 </BaseLayout>

@@ -1,0 +1,140 @@
+---
+import { siteConfig } from "@/config/site";
+import { headerNav } from "@/config/navigation";
+import Button from "@/components/ui/Button.astro";
+import MobileDrawer from "./MobileDrawer.tsx";
+---
+
+<header
+	class="sticky top-0 z-40 border-b-2 border-[var(--color-ink)] bg-[var(--color-paper)]"
+>
+	<div class="max-w-6xl mx-auto px-4 sm:px-6">
+		<div class="flex h-16 items-center gap-4">
+			<a
+				href="/"
+				class="font-[var(--font-heading)] text-xl font-extrabold tracking-tight text-[var(--color-ink)]"
+			>
+				{siteConfig.name}
+			</a>
+
+			<!-- Desktop nav: hidden on mobile -->
+			<nav aria-label="Primary" class="hidden md:block ml-4">
+				<ul class="flex items-center gap-1">
+					{
+						headerNav.map((group) => (
+							<li class="qb-dropdown relative">
+								<button
+									type="button"
+									class="qb-dropdown-trigger inline-flex min-h-[44px] items-center gap-1 px-3 font-semibold text-[var(--color-ink)] hover:underline underline-offset-4"
+									aria-expanded="false"
+									aria-controls={`menu-${group.label}`}
+								>
+									{group.label}
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+										<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+									</svg>
+								</button>
+								<div
+									id={`menu-${group.label}`}
+									class="qb-dropdown-panel absolute left-0 top-full mt-2 min-w-[16rem] border-2 border-[var(--color-ink)] bg-[var(--color-white)] shadow-[var(--shadow-md)]"
+								>
+									<ul class="py-1">
+										{group.links.map((link) => (
+											<li>
+												<a
+													href={link.href}
+													class="flex min-h-[44px] items-center px-4 font-medium text-[var(--color-ink)] hover:bg-[var(--color-muted)]"
+													{...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+												>
+													{link.label}
+												</a>
+											</li>
+										))}
+									</ul>
+								</div>
+							</li>
+						))
+					}
+				</ul>
+			</nav>
+
+			<div class="ml-auto flex items-center gap-2">
+				<!-- Locale switch placeholder -->
+				<div class="hidden md:flex items-center border-2 border-[var(--color-ink)] bg-[var(--color-white)] text-xs font-bold uppercase">
+					<span class="px-2 py-2 bg-[var(--color-ink)] text-[var(--color-paper)]">EN</span>
+					<span class="px-2 py-2 text-[var(--color-ink)] opacity-50">ID</span>
+				</div>
+
+				<a
+					href="/login"
+					class="hidden md:inline-flex min-h-[44px] items-center px-3 font-semibold text-[var(--color-ink)] hover:underline underline-offset-4"
+				>
+					Sign In
+				</a>
+
+				<!-- Desktop demo button -->
+				<span class="hidden md:inline-flex">
+					<Button href={siteConfig.demoUrl} variant="primary" size="sm">Request Demo</Button>
+				</span>
+
+				<!-- Mobile compact demo button -->
+				<span class="inline-flex md:hidden">
+					<Button href={siteConfig.demoUrl} variant="primary" size="sm">Demo</Button>
+				</span>
+
+				<!-- Mobile drawer (renders its own hamburger); hidden on desktop -->
+				<div class="md:hidden">
+					<MobileDrawer
+						client:idle
+						nav={headerNav}
+						demoUrl={siteConfig.demoUrl}
+						signInHref="/login"
+					/>
+				</div>
+			</div>
+		</div>
+	</div>
+</header>
+
+<style>
+	/* Show dropdown panel on hover, keyboard focus-within, or when JS marks it open. */
+	.qb-dropdown-panel {
+		display: none;
+	}
+	.qb-dropdown:hover .qb-dropdown-panel,
+	.qb-dropdown:focus-within .qb-dropdown-panel,
+	.qb-dropdown[data-open="true"] .qb-dropdown-panel {
+		display: block;
+	}
+</style>
+
+<script>
+	// Keyboard/Escape support for the Solutions/Product/Company dropdowns.
+	// :focus-within/:hover already opens them; JS adds Escape-to-close + aria sync.
+	const dropdowns = document.querySelectorAll<HTMLElement>(".qb-dropdown");
+	dropdowns.forEach((dd) => {
+		const trigger = dd.querySelector<HTMLButtonElement>(".qb-dropdown-trigger");
+		if (!trigger) return;
+
+		const setOpen = (open: boolean) => {
+			dd.dataset.open = open ? "true" : "false";
+			trigger.setAttribute("aria-expanded", open ? "true" : "false");
+		};
+
+		trigger.addEventListener("click", () => {
+			setOpen(dd.dataset.open !== "true");
+		});
+
+		dd.addEventListener("focusin", () => trigger.setAttribute("aria-expanded", "true"));
+		dd.addEventListener("focusout", (e) => {
+			if (!dd.contains(e.relatedTarget as Node)) setOpen(false);
+		});
+
+		dd.addEventListener("keydown", (e) => {
+			if (e.key === "Escape") {
+				setOpen(false);
+				trigger.focus();
+			}
+		});
+	});
+</script>
