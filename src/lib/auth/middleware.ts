@@ -17,5 +17,6 @@ export function getSessionUser(
 export function safeNext(next: string | null | undefined): string | null {
   if (!next) return null;
   if (!next.startsWith("/") || next.startsWith("//")) return null;
+  if (next.includes("\\")) return null; // some browsers normalize \ to /
   return next;
 }
