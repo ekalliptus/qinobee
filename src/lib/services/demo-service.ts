@@ -8,8 +8,7 @@ export interface SubmitResult {
 
 /**
  * Webhook config. Injected so the service is portable to Cloudflare Workers,
- * where env is request-scoped (`locals.runtime.env`) and NOT on `process.env`.
- * Defaults to `process.env` for backward-compat under the node/bun adapter.
+ * where env is request-scoped (from `cloudflare:workers`) and NOT on `process.env`.
  */
 export interface DemoEnv {
   DEMO_WEBHOOK_URL?: string;
@@ -34,7 +33,7 @@ export class DemoService {
 
   constructor(
     private db: SqlDb,
-    env: DemoEnv = process.env as DemoEnv,
+    env: DemoEnv = {},
   ) {
     this.env = env;
   }

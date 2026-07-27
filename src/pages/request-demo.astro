@@ -6,7 +6,7 @@ import NeoCard from "@/components/ui/NeoCard.astro";
 import Button from "@/components/ui/Button.astro";
 import Alert from "@/components/ui/Alert.astro";
 import SectionLabel from "@/components/ui/SectionLabel.astro";
-import { getSqlDb } from "@/lib/db/client";
+import { getSqlDb, getEnv } from "@/lib/db/client";
 import { DemoService } from "@/lib/services/demo-service";
 import { demoSchema, SOLUTIONS } from "@/lib/services/demo-schema";
 import { rateLimit } from "@/lib/rate-limit";
@@ -37,7 +37,7 @@ const v = {
 if (Astro.request.method === "POST") {
   const form = await Astro.request.formData();
   const ip = Astro.clientAddress || "unknown";
-  const limit = await rateLimit(getSqlDb(), `demo:${ip}`, 5, 600);
+  const limit = await rateLimit(getSqlDb(Astro.locals), `demo:${ip}`, 5, 600);
 
   const honey = String(form.get("company_website") ?? "");
 
@@ -57,7 +57,7 @@ if (Astro.request.method === "POST") {
     formError = "Too many requests. Please try again in a few minutes.";
   } else if (honey.trim() !== "") {
     // Honeypot tripped: submit (service drops it) and show success to the bot.
-    await new DemoService(getSqlDb()).submit({ company_website: honey } as any);
+    await new DemoService(getSqlDb(Astro.locals), getEnv(Astro.locals)).submit({ company_website: honey } as any);
     state = "success";
   } else {
     const input = {
@@ -80,7 +80,7 @@ if (Astro.request.method === "POST") {
         if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
       }
     } else {
-      const res = await new DemoService(getSqlDb()).submit(input);
+      const res = await new DemoService(getSqlDb(Astro.locals), getEnv(Astro.locals)).submit(input);
       if (res.ok) {
         state = "success";
       } else {

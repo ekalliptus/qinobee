@@ -22,14 +22,14 @@ if (Astro.request.method === "POST") {
   const confirm = String(form.get("confirm") ?? "");
 
   const ip = Astro.clientAddress || "unknown";
-  const limit = await rateLimit(getSqlDb(), `register:${ip}`, 10, 600);
+  const limit = await rateLimit(getSqlDb(Astro.locals), `register:${ip}`, 10, 600);
 
   if (!limit.allowed) {
     error = "Too many attempts. Please try again later.";
   } else if (password !== confirm) {
     error = "Passwords do not match.";
   } else {
-    const auth = new AuthService(getSqlDb());
+    const auth = new AuthService(getSqlDb(Astro.locals));
     try {
       await auth.register(emailValue, password);
       const sess = await auth.login(emailValue, password);

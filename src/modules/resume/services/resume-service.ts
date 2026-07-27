@@ -1,5 +1,4 @@
 import type { SqlDb } from "@lib/db/adapter";
-import { getSqlDb } from "@lib/db/client";
 import type { ResumeDocument } from "@modules/resume/types";
 import type { ResumeRepository, CreateArgs, UpdateArgs } from "@modules/resume/repository/interface";
 import { SqliteResumeRepository } from "@modules/resume/repository/sqlite";
@@ -39,6 +38,6 @@ export class ResumeService {
   }
 }
 
-export function createResumeService(db: SqlDb = getSqlDb()): ResumeService {
+export function createResumeService(db: SqlDb): ResumeService {
   return new ResumeService(new SqliteResumeRepository(db));
 }

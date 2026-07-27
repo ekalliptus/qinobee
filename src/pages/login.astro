@@ -23,12 +23,12 @@ if (Astro.request.method === "POST") {
   const password = String(form.get("password") ?? "");
 
   const ip = Astro.clientAddress || "unknown";
-  const limit = await rateLimit(getSqlDb(), `login:${ip}`, 10, 600);
+  const limit = await rateLimit(getSqlDb(Astro.locals), `login:${ip}`, 10, 600);
 
   if (!limit.allowed) {
     error = "Too many attempts. Please try again later.";
   } else {
-    const auth = new AuthService(getSqlDb());
+    const auth = new AuthService(getSqlDb(Astro.locals));
     try {
       const sess = await auth.login(emailValue, password);
       Astro.cookies.set(

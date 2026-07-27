@@ -112,9 +112,9 @@ function fallbackMatch(input: AnalyseJobMatchInput): JobMatchAiResult {
 }
 
 export function createAiService(opts: AiServiceOptions = {}): AiService {
-  const apiKey = opts.apiKey ?? process.env.AI_API_KEY ?? "";
-  const baseUrl = opts.baseUrl ?? process.env.AI_BASE_URL ?? "https://router.ekalliptus.com/v1";
-  const model = opts.model ?? process.env.AI_MODEL ?? "gaskeun";
+  const apiKey = opts.apiKey ?? "";
+  const baseUrl = opts.baseUrl ?? "https://router.ekalliptus.com/v1";
+  const model = opts.model ?? "gaskeun";
   const fetchImpl = opts.fetchImpl;
   const timeoutMs = opts.timeoutMs;
   const enabled = !!apiKey;
@@ -169,8 +169,15 @@ export function createAiService(opts: AiServiceOptions = {}): AiService {
   };
 }
 
-let singleton: AiService | null = null;
-export function getAiService(): AiService {
-  if (!singleton) singleton = createAiService();
-  return singleton;
+/** Request-scoped: reads AI config from the CF runtime env, not process.env. */
+export function getAiService(env: {
+  AI_API_KEY?: string;
+  AI_BASE_URL?: string;
+  AI_MODEL?: string;
+}): AiService {
+  return createAiService({
+    apiKey: env.AI_API_KEY,
+    baseUrl: env.AI_BASE_URL,
+    model: env.AI_MODEL,
+  });
 }

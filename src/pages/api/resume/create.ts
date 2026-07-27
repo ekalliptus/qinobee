@@ -20,7 +20,7 @@ export const POST: APIRoute = async (ctx) => {
   });
   if (!parsed.success) return new Response("Bad Request", { status: 400 });
 
-  const svc = createResumeService(getSqlDb());
+  const svc = createResumeService(getSqlDb(ctx.locals));
   const created = await svc.create({ userId: user.id, input: parsed.data });
   return ctx.redirect(`/app/resume/${created.id}/edit`, 303);
 };

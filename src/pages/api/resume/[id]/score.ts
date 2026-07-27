@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import type { SqlDb } from "@lib/db/adapter";
 import { getSqlDb } from "@lib/db/client";
 import { AuthService } from "@lib/auth/service";
 import { getSessionUser } from "@lib/auth/middleware";
@@ -14,9 +15,9 @@ function json(body: unknown, status: number): Response {
 }
 
 // Scoring is deterministic (not AI) — no consent required. Ownership enforced.
-async function respond(userId: string, resumeId: string): Promise<Response> {
+async function respond(db: SqlDb, userId: string, resumeId: string): Promise<Response> {
   try {
-    const doc = await createResumeService(getSqlDb()).getOrThrow(userId, resumeId);
+    const doc = await createResumeService(db).getOrThrow(userId, resumeId);
     return json({ ok: true, score: scoreResume(doc) }, 200);
   } catch (err) {
     if (err instanceof NotFoundError) return json({ ok: false }, 404);
@@ -25,13 +26,15 @@ async function respond(userId: string, resumeId: string): Promise<Response> {
 }
 
 export const GET: APIRoute = async ({ params, locals, cookies }) => {
-  const user = (await getSessionUser(new AuthService(getSqlDb()), cookies)) ?? locals.user;
+  const db = getSqlDb(locals);
+  const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
-  return respond(user.id, params.id!);
+  return respond(db, user.id, params.id!);
 };
 
 export const POST: APIRoute = async ({ params, locals, cookies }) => {
-  const user = (await getSessionUser(new AuthService(getSqlDb()), cookies)) ?? locals.user;
+  const db = getSqlDb(locals);
+  const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
-  return respond(user.id, params.id!);
+  return respond(db, user.id, params.id!);
 };

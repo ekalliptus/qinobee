@@ -15,7 +15,7 @@ if (!user) {
   return Astro.redirect("/login?next=" + encodeURIComponent(Astro.url.pathname));
 }
 
-const service = createResumeService(getSqlDb());
+const service = createResumeService(getSqlDb(Astro.locals));
 let doc: ResumeDocument;
 try {
   doc = await service.getOrThrow(user.id, Astro.params.id!);

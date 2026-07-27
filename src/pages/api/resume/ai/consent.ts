@@ -12,14 +12,14 @@ function json(body: unknown, status: number): Response {
 }
 
 export const GET: APIRoute = async ({ locals, cookies }) => {
-  const db = getSqlDb();
+  const db = getSqlDb(locals);
   const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
   return json({ ok: true, consent: await hasAiConsent(db, user.id) }, 200);
 };
 
 export const POST: APIRoute = async ({ locals, cookies }) => {
-  const db = getSqlDb();
+  const db = getSqlDb(locals);
   const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
   await setAiConsent(db, user.id);

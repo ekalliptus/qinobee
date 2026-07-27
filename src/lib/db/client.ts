@@ -1,47 +1,22 @@
-import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { env } from "cloudflare:workers";
 import type { SqlDb } from "./adapter";
-import { createSqliteAdapter, adaptSqlite } from "./sqlite-adapter";
-import { migrate } from "./migrate";
+import { d1Adapter } from "./d1-adapter";
 
-export function createDb(path?: string): Database {
-  const file = path ?? process.env.DATABASE_URL ?? "./data/qinobee.sqlite";
-  if (file !== ":memory:") {
-    mkdirSync(dirname(file), { recursive: true });
-  }
-  const db = new Database(file);
-  db.run("PRAGMA foreign_keys = ON;");
-  if (file !== ":memory:") {
-    db.run("PRAGMA journal_mode = WAL;");
-  }
-  return db;
+// This adapter version (@astrojs/cloudflare v14) removed `locals.runtime.env`
+// (it now throws); the request-scoped bindings live on the `cloudflare:workers`
+// `env` proxy, which workerd resolves per-request via async context. There is
+// NO module-global DB and NO process.env in the request path. Tests never touch
+// this module — they build a bun:sqlite `SqlDb` via `createSqliteAdapter`.
+//
+// `locals` is accepted to keep call sites request-scoped and future-proof even
+// though env is sourced from `cloudflare:workers` in this adapter version.
+
+/** Request-scoped application database (D1) from the CF runtime binding. */
+export function getSqlDb(_locals?: App.Locals): SqlDb {
+  return d1Adapter(env.DB);
 }
 
-/** Unmigrated bun:sqlite-backed SqlDb for tests. Callers run migrateDb. */
-export function createSqliteTestDb(path = ":memory:"): SqlDb {
-  return createSqliteAdapter(path);
-}
-
-let singleton: Database | null = null;
-let sqlSingleton: SqlDb | null = null;
-
-/** Shared application database (migrated once). Use in server code, not tests. */
-export function getDb(): Database {
-  if (singleton) return singleton;
-  singleton = createDb();
-  migrate(singleton);
-  return singleton;
-}
-
-/**
- * Shared application database as the async SqlDb adapter (bun:sqlite today,
- * D1 after M6). Wraps the same migrated singleton returned by getDb().
- * Used by modules migrated to SqlDb (auth service, consent, rate-limit).
- * Legacy sync callers (resume/demo repositories) keep using getDb().
- */
-export function getSqlDb(): SqlDb {
-  if (sqlSingleton) return sqlSingleton;
-  sqlSingleton = adaptSqlite(getDb());
-  return sqlSingleton;
+/** Request-scoped, typed environment (bindings + vars) from the CF runtime. */
+export function getEnv(_locals?: App.Locals): Env {
+  return env;
 }

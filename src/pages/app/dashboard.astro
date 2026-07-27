@@ -10,7 +10,7 @@ import { scoreResume } from "@modules/resume/scoring/engine";
 export const prerender = false;
 
 const user = Astro.locals.user!; // guaranteed by middleware on /app
-const resumes = await createResumeService(getSqlDb()).list(user.id);
+const resumes = await createResumeService(getSqlDb(Astro.locals)).list(user.id);
 const latest = resumes[0];
 const latestScore = latest ? scoreResume(latest).overall : null;
 

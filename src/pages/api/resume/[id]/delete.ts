@@ -10,7 +10,7 @@ export const POST: APIRoute = async (ctx) => {
   const guard = await guardFormAction(ctx);
   if (guard instanceof Response) return guard;
 
-  const svc = createResumeService(getSqlDb());
+  const svc = createResumeService(getSqlDb(ctx.locals));
   try {
     await svc.remove(guard.id, ctx.params.id!);
   } catch (err) {

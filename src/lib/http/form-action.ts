@@ -36,7 +36,7 @@ export async function guardFormAction(ctx: APIContext): Promise<SessionUser | Re
     return new Response("Payload Too Large", { status: 413 });
   }
 
-  const user = (await getSessionUser(new AuthService(getSqlDb()), cookies)) ?? locals.user;
+  const user = (await getSessionUser(new AuthService(getSqlDb(locals)), cookies)) ?? locals.user;
   if (!user) return new Response("Unauthorized", { status: 401 });
   return user;
 }

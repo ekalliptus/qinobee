@@ -17,7 +17,7 @@ export const POST: APIRoute = async (ctx) => {
   const parsed = titleSchema.safeParse(form.get("title"));
   if (!parsed.success) return new Response("Bad Request", { status: 400 });
 
-  const svc = createResumeService(getSqlDb());
+  const svc = createResumeService(getSqlDb(ctx.locals));
   const id = ctx.params.id!;
   // Load current revision, then optimistic update. A stale revision (e.g. an
   // autosave landed in between) retries once against the fresh revision.

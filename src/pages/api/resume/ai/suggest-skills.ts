@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getSqlDb } from "@lib/db/client";
+import { getSqlDb, getEnv } from "@lib/db/client";
 import { AuthService } from "@lib/auth/service";
 import { getSessionUser } from "@lib/auth/middleware";
 import { hasAiConsent } from "@lib/auth/consent";
@@ -16,7 +16,7 @@ function json(body: unknown, status: number): Response {
 }
 
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
-  const db = getSqlDb();
+  const db = getSqlDb(locals);
   const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
 
@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     const result = await handleSuggestSkills({
       user,
       consentGiven: await hasAiConsent(db, user.id),
-      aiService: getAiService(),
+      aiService: getAiService(getEnv(locals)),
       body,
     });
     return json(result.body, result.status);

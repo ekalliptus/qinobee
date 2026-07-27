@@ -16,8 +16,8 @@ function json(body: unknown, status: number): Response {
 }
 
 export const POST: APIRoute = async ({ params, request, locals, cookies }) => {
-  const db = getSqlDb();
-  const auth = new AuthService(getSqlDb());
+  const db = getSqlDb(locals);
+  const auth = new AuthService(db);
   const user = (await getSessionUser(auth, cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
 

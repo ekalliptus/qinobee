@@ -13,7 +13,7 @@ export const prerender = false;
 const user = Astro.locals.user;
 if (!user) return Astro.redirect("/login?next=/app/resume/new");
 
-const svc = createResumeService(getSqlDb());
+const svc = createResumeService(getSqlDb(Astro.locals));
 const resumes = await svc.list(user.id);
 const templates = listTemplates();
 const hasResumes = resumes.length > 0;
