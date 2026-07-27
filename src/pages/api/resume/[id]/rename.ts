@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getDb } from "@lib/db/client";
+import { getSqlDb } from "@lib/db/client";
 import { createResumeService } from "@modules/resume/services/resume-service";
 import { nonEmpty } from "@lib/validation/primitives";
 import { ConflictError, NotFoundError } from "@modules/resume/repository/errors";
@@ -17,7 +17,7 @@ export const POST: APIRoute = async (ctx) => {
   const parsed = titleSchema.safeParse(form.get("title"));
   if (!parsed.success) return new Response("Bad Request", { status: 400 });
 
-  const svc = createResumeService(getDb());
+  const svc = createResumeService(getSqlDb());
   const id = ctx.params.id!;
   // Load current revision, then optimistic update. A stale revision (e.g. an
   // autosave landed in between) retries once against the fresh revision.

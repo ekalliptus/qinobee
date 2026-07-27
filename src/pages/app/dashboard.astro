@@ -3,14 +3,14 @@ import AppLayout from "@/layouts/AppLayout.astro";
 import NeoCard from "@components/ui/NeoCard.astro";
 import Button from "@components/ui/Button.astro";
 import ScoreRing from "@components/ui/ScoreRing.astro";
-import { getDb } from "@lib/db/client";
+import { getSqlDb } from "@lib/db/client";
 import { createResumeService } from "@modules/resume/services/resume-service";
 import { scoreResume } from "@modules/resume/scoring/engine";
 
 export const prerender = false;
 
 const user = Astro.locals.user!; // guaranteed by middleware on /app
-const resumes = await createResumeService(getDb()).list(user.id);
+const resumes = await createResumeService(getSqlDb()).list(user.id);
 const latest = resumes[0];
 const latestScore = latest ? scoreResume(latest).overall : null;
 

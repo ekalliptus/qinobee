@@ -3,7 +3,7 @@ import AppLayout from "@/layouts/AppLayout.astro";
 import NeoCard from "@components/ui/NeoCard.astro";
 import Button from "@components/ui/Button.astro";
 import Badge from "@components/ui/Badge.astro";
-import { getDb } from "@lib/db/client";
+import { getSqlDb } from "@lib/db/client";
 import { createResumeService } from "@modules/resume/services/resume-service";
 import { listTemplates } from "@modules/resume/templates/registry";
 import { features } from "@/config/features";
@@ -13,7 +13,7 @@ export const prerender = false;
 const user = Astro.locals.user;
 if (!user) return Astro.redirect("/login?next=/app/resume/new");
 
-const svc = createResumeService(getDb());
+const svc = createResumeService(getSqlDb());
 const resumes = await svc.list(user.id);
 const templates = listTemplates();
 const hasResumes = resumes.length > 0;

@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getDb } from "@lib/db/client";
+import { getSqlDb } from "@lib/db/client";
 import { createResumeService } from "@modules/resume/services/resume-service";
 import { createResumeInputSchema } from "@modules/resume/schemas";
 import { guardFormAction } from "@lib/http/form-action";
@@ -20,7 +20,7 @@ export const POST: APIRoute = async (ctx) => {
   });
   if (!parsed.success) return new Response("Bad Request", { status: 400 });
 
-  const svc = createResumeService(getDb());
+  const svc = createResumeService(getSqlDb());
   const created = await svc.create({ userId: user.id, input: parsed.data });
   return ctx.redirect(`/app/resume/${created.id}/edit`, 303);
 };

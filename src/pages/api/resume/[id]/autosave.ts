@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getDb, getSqlDb } from "@lib/db/client";
+import { getSqlDb } from "@lib/db/client";
 import { AuthService } from "@lib/auth/service";
 import { getSessionUser } from "@lib/auth/middleware";
 import { createResumeService } from "@modules/resume/services/resume-service";
@@ -16,7 +16,7 @@ function json(body: unknown, status: number): Response {
 }
 
 export const POST: APIRoute = async ({ params, request, locals, cookies }) => {
-  const db = getDb();
+  const db = getSqlDb();
   const auth = new AuthService(getSqlDb());
   const user = (await getSessionUser(auth, cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);

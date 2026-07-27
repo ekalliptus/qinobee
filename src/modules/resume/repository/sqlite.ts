@@ -1,4 +1,4 @@
-import type { Database } from "bun:sqlite";
+import type { SqlDb } from "@lib/db/adapter";
 import { resumeDocumentSchema, createResumeInputSchema, updateResumeInputSchema } from "@modules/resume/schemas";
 import type { ResumeDocument } from "@modules/resume/types";
 import type { ResumeRepository, CreateArgs, UpdateArgs } from "./interface";
@@ -24,23 +24,25 @@ const DEFAULT_SECTION_ORDER = [
 interface ResumeRow { data: string; revision: number; }
 
 export class SqliteResumeRepository implements ResumeRepository {
-  constructor(private db: Database) {}
+  constructor(private db: SqlDb) {}
 
   private parse(data: string): ResumeDocument {
     return resumeDocumentSchema.parse(JSON.parse(data));
   }
 
   async list(userId: string): Promise<ResumeDocument[]> {
-    const rows = this.db
-      .query("SELECT data FROM resumes WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC")
-      .all(userId) as { data: string }[];
+    const rows = await this.db
+      .prepare("SELECT data FROM resumes WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC")
+      .bind(userId)
+      .all<{ data: string }>();
     return rows.map((r) => this.parse(r.data));
   }
 
   async findById(userId: string, resumeId: string): Promise<ResumeDocument | null> {
-    const row = this.db
-      .query("SELECT data FROM resumes WHERE id = ? AND user_id = ? AND deleted_at IS NULL")
-      .get(resumeId, userId) as { data: string } | null;
+    const row = await this.db
+      .prepare("SELECT data FROM resumes WHERE id = ? AND user_id = ? AND deleted_at IS NULL")
+      .bind(resumeId, userId)
+      .first<{ data: string }>();
     return row ? this.parse(row.data) : null;
   }
 
@@ -75,18 +77,20 @@ export class SqliteResumeRepository implements ResumeRepository {
       createdAt: now,
       updatedAt: now,
     });
-    this.db
-      .query(
+    await this.db
+      .prepare(
         "INSERT INTO resumes (id,user_id,title,status,template_id,language,revision,data,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
       )
-      .run(id, userId, doc.title, doc.status, doc.templateId, doc.language, 0, JSON.stringify(doc), now, now);
+      .bind(id, userId, doc.title, doc.status, doc.templateId, doc.language, 0, JSON.stringify(doc), now, now)
+      .run();
     return doc;
   }
 
   async update(userId: string, resumeId: string, { revision, patch, reason }: UpdateArgs): Promise<ResumeDocument> {
-    const row = this.db
-      .query("SELECT data, revision FROM resumes WHERE id = ? AND user_id = ? AND deleted_at IS NULL")
-      .get(resumeId, userId) as ResumeRow | null;
+    const row = await this.db
+      .prepare("SELECT data, revision FROM resumes WHERE id = ? AND user_id = ? AND deleted_at IS NULL")
+      .bind(resumeId, userId)
+      .first<ResumeRow>();
     if (!row) throw new NotFoundError();
 
     const current = this.parse(row.data);
@@ -101,25 +105,30 @@ export class SqliteResumeRepository implements ResumeRepository {
     });
     const dataJson = JSON.stringify(merged);
 
-    this.db.transaction(() => {
-      const res = this.db
-        .query(
-          "UPDATE resumes SET data=?, title=?, status=?, template_id=?, language=?, revision=revision+1, updated_at=? WHERE id=? AND user_id=? AND revision=?",
-        )
-        .run(dataJson, merged.title, merged.status, merged.templateId, merged.language, now, resumeId, userId, revision);
-      if (res.changes === 0) throw new ConflictError();
+    // D1 has no interactive transactions, so the optimistic lock lives entirely
+    // in this conditional UPDATE: it only matches when the on-disk revision is
+    // still the caller's `revision`. changes===0 means someone else advanced it.
+    const res = await this.db
+      .prepare(
+        "UPDATE resumes SET data=?, title=?, status=?, template_id=?, language=?, revision=revision+1, updated_at=? WHERE id=? AND user_id=? AND revision=?",
+      )
+      .bind(dataJson, merged.title, merged.status, merged.templateId, merged.language, now, resumeId, userId, revision)
+      .run();
+    if (res.changes === 0) throw new ConflictError();
 
+    // Snapshot at the NEW revision + prune to newest MAX_SNAPSHOTS, atomically.
+    // This is a second await (not one txn with the UPDATE); lock integrity is on
+    // the UPDATE above, so a snapshot-only failure can't corrupt the row state.
+    await this.db.batch([
       this.db
-        .query("INSERT INTO resume_revisions (id,resume_id,revision,data,reason,created_at) VALUES (?,?,?,?,?,?)")
-        .run(crypto.randomUUID(), resumeId, newRevision, dataJson, reason ?? "update", now);
-
-      // Bound snapshot history: keep only the newest MAX_SNAPSHOTS per resume.
+        .prepare("INSERT INTO resume_revisions (id,resume_id,revision,data,reason,created_at) VALUES (?,?,?,?,?,?)")
+        .bind(crypto.randomUUID(), resumeId, newRevision, dataJson, reason ?? "update", now),
       this.db
-        .query(
+        .prepare(
           "DELETE FROM resume_revisions WHERE resume_id = ? AND revision <= (SELECT MAX(revision) - ? FROM resume_revisions WHERE resume_id = ?)",
         )
-        .run(resumeId, MAX_SNAPSHOTS, resumeId);
-    })();
+        .bind(resumeId, MAX_SNAPSHOTS, resumeId),
+    ]);
 
     return merged;
   }
@@ -137,19 +146,21 @@ export class SqliteResumeRepository implements ResumeRepository {
       createdAt: now,
       updatedAt: now,
     });
-    this.db
-      .query(
+    await this.db
+      .prepare(
         "INSERT INTO resumes (id,user_id,title,status,template_id,language,revision,data,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
       )
-      .run(id, userId, dup.title, dup.status, dup.templateId, dup.language, 0, JSON.stringify(dup), now, now);
+      .bind(id, userId, dup.title, dup.status, dup.templateId, dup.language, 0, JSON.stringify(dup), now, now)
+      .run();
     return dup;
   }
 
   async softDelete(userId: string, resumeId: string): Promise<void> {
     const now = new Date().toISOString();
-    const res = this.db
-      .query("UPDATE resumes SET deleted_at=? WHERE id=? AND user_id=? AND deleted_at IS NULL")
-      .run(now, resumeId, userId);
+    const res = await this.db
+      .prepare("UPDATE resumes SET deleted_at=? WHERE id=? AND user_id=? AND deleted_at IS NULL")
+      .bind(now, resumeId, userId)
+      .run();
     if (res.changes === 0) throw new NotFoundError();
   }
 }

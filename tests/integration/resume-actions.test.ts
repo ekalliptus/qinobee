@@ -1,26 +1,27 @@
 import { test, expect } from "bun:test";
-import { createDb } from "@lib/db/client";
-import { migrate } from "@lib/db/migrate";
+import { createSqliteAdapter } from "@lib/db/sqlite-adapter";
+import { migrateDb } from "@lib/db/migrate";
 import { createResumeService } from "@modules/resume/services/resume-service";
 
 // Action-level authorization guard for the CRUD endpoints. Endpoints are thin
 // wrappers over these service methods; ownership is enforced here (endpoints
 // only add auth + parsing). Non-owner access must be indistinguishable from a
 // missing record (throws NotFoundError -> 404), never 403.
-function setup() {
-  const db = createDb(":memory:");
-  migrate(db);
+async function setup() {
+  const db = createSqliteAdapter(":memory:");
+  await migrateDb(db);
   const now = new Date().toISOString();
   for (const id of ["u1", "u2"]) {
-    db.query(
-      "INSERT INTO users (id,email,password_hash,created_at) VALUES (?,?,?,?)",
-    ).run(id, `${id}@x.com`, "hash", now);
+    await db
+      .prepare("INSERT INTO users (id,email,password_hash,created_at) VALUES (?,?,?,?)")
+      .bind(id, `${id}@x.com`, "hash", now)
+      .run();
   }
   return createResumeService(db);
 }
 
 test("create + list scoped to owner", async () => {
-  const svc = setup();
+  const svc = await setup();
   const r = await svc.create({
     userId: "u1",
     input: { title: "CV", language: "en", templateId: "essential" },
@@ -31,7 +32,7 @@ test("create + list scoped to owner", async () => {
 });
 
 test("duplicate only for owner", async () => {
-  const svc = setup();
+  const svc = await setup();
   const r = await svc.create({
     userId: "u1",
     input: { title: "CV", language: "en", templateId: "essential" },
@@ -42,7 +43,7 @@ test("duplicate only for owner", async () => {
 });
 
 test("rename via update only for owner + bumps revision", async () => {
-  const svc = setup();
+  const svc = await setup();
   const r = await svc.create({
     userId: "u1",
     input: { title: "CV", language: "en", templateId: "essential" },
@@ -60,7 +61,7 @@ test("rename via update only for owner + bumps revision", async () => {
 });
 
 test("remove (soft delete) only for owner", async () => {
-  const svc = setup();
+  const svc = await setup();
   const r = await svc.create({
     userId: "u1",
     input: { title: "CV", language: "en", templateId: "essential" },

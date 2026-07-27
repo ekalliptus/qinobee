@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { getDb } from "@lib/db/client";
+import { getSqlDb } from "@lib/db/client";
 import { createResumeService } from "@modules/resume/services/resume-service";
 import ResumeEditor from "@modules/resume/components/ResumeEditor";
 import type { ResumeDocument } from "@modules/resume/types";
@@ -12,7 +12,7 @@ if (!user) {
   return Astro.redirect("/login?next=" + encodeURIComponent(Astro.url.pathname));
 }
 
-const service = createResumeService(getDb());
+const service = createResumeService(getSqlDb());
 let doc: ResumeDocument;
 try {
   doc = await service.getOrThrow(user.id, Astro.params.id!);

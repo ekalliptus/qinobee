@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getDb, getSqlDb } from "@lib/db/client";
+import { getSqlDb } from "@lib/db/client";
 import { AuthService } from "@lib/auth/service";
 import { getSessionUser } from "@lib/auth/middleware";
 import { createResumeService } from "@modules/resume/services/resume-service";
@@ -16,7 +16,7 @@ function json(body: unknown, status: number): Response {
 // Scoring is deterministic (not AI) — no consent required. Ownership enforced.
 async function respond(userId: string, resumeId: string): Promise<Response> {
   try {
-    const doc = await createResumeService(getDb()).getOrThrow(userId, resumeId);
+    const doc = await createResumeService(getSqlDb()).getOrThrow(userId, resumeId);
     return json({ ok: true, score: scoreResume(doc) }, 200);
   } catch (err) {
     if (err instanceof NotFoundError) return json({ ok: false }, 404);
