@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ResumeDocument, UpdateResumeInput } from "@modules/resume/types";
 import { useResumeEditorStore, type SaveResult } from "./store";
 import type { SaveStatus } from "./save-reconcile";
@@ -96,6 +96,7 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
   const store = useResumeEditorStore(props.initialDoc, { save });
   const [active, setActive] = useState<SectionKey>("personalInformation");
   const [mobileTab, setMobileTab] = useState<MobileTab>("edit");
+  const mobileTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [conflictDismissed, setConflictDismissed] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showScore, setShowScore] = useState(false);
@@ -168,7 +169,7 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
         <div aria-live="polite" className="min-h-[24px] text-sm font-medium">
           {STATUS_LABEL[status]}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button type="button" className={BTN} disabled={!store.canUndo} onClick={store.undo}>
             Undo
           </button>
@@ -261,26 +262,52 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
 
       {/* Mobile segmented control */}
       <div className="flex gap-2 md:hidden" role="tablist" aria-label="Editor view">
-        {(["edit", "preview", "score"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={mobileTab === t}
-            className={`neo-button min-h-[44px] flex-1 px-2 text-sm ${
-              mobileTab === t
-                ? "bg-[var(--color-ink)] text-[var(--color-paper)]"
-                : "bg-[var(--color-white)] text-[var(--color-ink)]"
-            }`}
-            onClick={() => setMobileTab(t)}
-          >
-            {t === "edit" ? "Edit" : t === "preview" ? "Preview" : "Score"}
-          </button>
-        ))}
+        {(["edit", "preview", "score"] as const).map((t, i, tabs) => {
+          const selected = mobileTab === t;
+          return (
+            <button
+              key={t}
+              ref={(el) => {
+                mobileTabRefs.current[i] = el;
+              }}
+              type="button"
+              role="tab"
+              id={`editor-tab-${t}`}
+              aria-selected={selected}
+              aria-controls="editor-tabpanel"
+              tabIndex={selected ? 0 : -1}
+              className={`neo-button min-h-[44px] flex-1 px-2 text-sm ${
+                selected
+                  ? "bg-[var(--color-ink)] text-[var(--color-paper)]"
+                  : "bg-[var(--color-white)] text-[var(--color-ink)]"
+              }`}
+              onClick={() => setMobileTab(t)}
+              onKeyDown={(e) => {
+                const last = tabs.length - 1;
+                let next = i;
+                if (e.key === "ArrowRight") next = i === last ? 0 : i + 1;
+                else if (e.key === "ArrowLeft") next = i === 0 ? last : i - 1;
+                else if (e.key === "Home") next = 0;
+                else if (e.key === "End") next = last;
+                else return;
+                e.preventDefault();
+                setMobileTab(tabs[next]);
+                mobileTabRefs.current[next]?.focus();
+              }}
+            >
+              {t === "edit" ? "Edit" : t === "preview" ? "Preview" : "Score"}
+            </button>
+          );
+        })}
       </div>
 
       {/* Mobile view */}
-      <div className="flex flex-col gap-4 md:hidden">
+      <div
+        id="editor-tabpanel"
+        role="tabpanel"
+        aria-labelledby={`editor-tab-${mobileTab}`}
+        className="flex flex-col gap-4 md:hidden"
+      >
         {mobileTab === "edit" ? (
           <>
             {nav}

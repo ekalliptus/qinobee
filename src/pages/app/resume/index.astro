@@ -43,32 +43,4 @@ const resumes = await svc.list(user.id);
       </ul>
     )
   }
-
-  <script>
-    // Wire ResumeCard's native <dialog> rename/delete confirmations.
-    // showModal() gives a real focus trap + Escape-to-close for free;
-    // overlay (::backdrop) click also closes. Delete stays a POST form.
-    const byId = (id: string | null) =>
-      id ? (document.getElementById(id) as HTMLDialogElement | null) : null;
-
-    document.addEventListener("click", (e) => {
-      const el = (e.target as HTMLElement).closest<HTMLElement>(
-        "[data-open-dialog],[data-close-dialog]",
-      );
-      if (!el) return;
-      const openId = el.getAttribute("data-open-dialog");
-      if (openId) {
-        byId(openId)?.showModal();
-        return;
-      }
-      byId(el.getAttribute("data-close-dialog"))?.close();
-    });
-
-    // Click on the backdrop (outside the form) closes the dialog.
-    document.querySelectorAll<HTMLDialogElement>("dialog").forEach((d) => {
-      d.addEventListener("click", (e) => {
-        if (e.target === d) d.close();
-      });
-    });
-  </script>
 </AppLayout>

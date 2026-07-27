@@ -12,6 +12,9 @@
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-3);
   font-family: var(--font-body);
+  /* >=16px keeps iOS Safari from auto-zooming on focus. Overrides any
+     text-sm utility applied alongside .neo-input (unlayered wins). */
+  font-size: 1rem;
   color: var(--color-ink);
 }
 

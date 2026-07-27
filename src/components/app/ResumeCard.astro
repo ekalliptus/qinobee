@@ -66,6 +66,7 @@ const deleteId = `delete-${resume.id}`;
     <button
       type="button"
       class="neo-button min-h-[44px] bg-[var(--color-white)] px-3 text-sm text-[var(--color-ink)]"
+      aria-haspopup="dialog"
       data-open-dialog={renameId}
     >
       Rename
@@ -73,6 +74,7 @@ const deleteId = `delete-${resume.id}`;
     <button
       type="button"
       class="neo-button min-h-[44px] bg-[var(--color-red)] px-3 text-sm text-[var(--color-ink)]"
+      aria-haspopup="dialog"
       data-open-dialog={deleteId}
     >
       Delete
@@ -121,3 +123,33 @@ const deleteId = `delete-${resume.id}`;
     </form>
   </dialog>
 </NeoCard>
+
+<script>
+  // Self-contained dialog wiring so ResumeCard works anywhere it is used.
+  // Astro bundles this once regardless of how many cards render, so a single
+  // delegated listener drives every card's rename/delete <dialog>.
+  // showModal() gives a native focus trap + Escape-to-close, and native
+  // <dialog> returns focus to the trigger on close. Backdrop click also closes.
+  const byId = (id: string | null) =>
+    id ? (document.getElementById(id) as HTMLDialogElement | null) : null;
+
+  document.addEventListener("click", (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>(
+      "[data-open-dialog],[data-close-dialog]",
+    );
+    if (!el) return;
+    const openId = el.getAttribute("data-open-dialog");
+    if (openId) {
+      byId(openId)?.showModal();
+      return;
+    }
+    byId(el.getAttribute("data-close-dialog"))?.close();
+  });
+
+  // Click on the backdrop (outside the form) closes the dialog.
+  document.querySelectorAll<HTMLDialogElement>("dialog").forEach((d) => {
+    d.addEventListener("click", (e) => {
+      if (e.target === d) d.close();
+    });
+  });
+</script>

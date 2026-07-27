@@ -4,7 +4,7 @@ import { SECTIONS, sectionStatus, type SectionKey, type SectionStatus } from "./
 const PILL: Record<SectionStatus, string> = {
   Empty: "bg-[var(--color-white)] text-[var(--color-ink)]",
   Incomplete: "bg-[var(--color-yellow)] text-[var(--color-ink)]",
-  Complete: "bg-[var(--color-success)] text-[var(--color-white)]",
+  Complete: "bg-[var(--color-success)] text-[var(--color-ink)]",
 };
 
 export default function SectionNav(props: {

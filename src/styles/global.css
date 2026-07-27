@@ -32,6 +32,15 @@ h6 {
   line-height: 1.15;
 }
 
+/* Form controls default to >=16px so iOS Safari never auto-zooms on focus.
+   Plain HTML inputs (login/register/request-demo, ResumeCard rename) have no
+   font-size class, so this element rule applies; .neo-input sets its own. */
+input,
+textarea,
+select {
+  font-size: 1rem;
+}
+
 :focus-visible {
   outline: 3px solid var(--color-ink);
   outline-offset: 2px;
