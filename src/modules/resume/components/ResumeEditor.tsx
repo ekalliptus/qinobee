@@ -10,6 +10,7 @@ import WorkExperienceSection from "./sections/WorkExperienceSection";
 import EducationSection from "./sections/EducationSection";
 import ProjectsSection from "./sections/ProjectsSection";
 import SkillsSection from "./sections/SkillsSection";
+import Preview from "./Preview";
 
 /** Editable subset only — the exact keys accepted by updateResumeInputSchema. */
 export function toPatch(doc: ResumeDocument): UpdateResumeInput {
@@ -104,11 +105,9 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
     <ActiveSection active={active} doc={store.doc} update={updateFn} />
   );
   const previewPane = (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       <h2 className="text-lg font-bold">Live preview</h2>
-      <div id="preview-slot" className="neo-card min-h-[200px]" aria-label="Live preview placeholder">
-        Preview coming soon
-      </div>
+      <Preview resume={store.doc} />
     </div>
   );
 
@@ -175,7 +174,7 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
             {form}
           </>
         ) : mobileTab === "preview" ? (
-          <div className="neo-card">Preview coming in a later step.</div>
+          <Preview resume={store.doc} />
         ) : (
           <div className="neo-card">Score coming in a later step.</div>
         )}
