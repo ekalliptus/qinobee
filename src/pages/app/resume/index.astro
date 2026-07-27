@@ -1,0 +1,74 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro";
+import NeoCard from "@components/ui/NeoCard.astro";
+import Button from "@components/ui/Button.astro";
+import ResumeCard from "@components/app/ResumeCard.astro";
+import { getDb } from "@lib/db/client";
+import { createResumeService } from "@modules/resume/services/resume-service";
+
+export const prerender = false;
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect("/login?next=/app/resume");
+
+const svc = createResumeService(getDb());
+const resumes = await svc.list(user.id);
+---
+
+<AppLayout meta={{ title: "My Resumes" }}>
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-2xl font-extrabold text-[var(--color-ink)]">My Resumes</h1>
+    <Button href="/app/resume/new" variant="primary" size="sm">Create New CV</Button>
+  </div>
+
+  {
+    resumes.length === 0 ? (
+      <NeoCard class="p-6">
+        <p class="text-sm text-[var(--color-ink)]">
+          You have not created a resume yet.
+        </p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <Button href="/app/resume/new" variant="primary" size="sm">Create New CV</Button>
+          <Button variant="secondary" size="sm" disabled>Import Career Profile (Soon)</Button>
+          <Button variant="secondary" size="sm" disabled>Create Cover Letter (Soon)</Button>
+        </div>
+      </NeoCard>
+    ) : (
+      <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {resumes.map((resume) => (
+          <li class="min-w-0">
+            <ResumeCard resume={resume} />
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  <script>
+    // Wire ResumeCard's native <dialog> rename/delete confirmations.
+    // showModal() gives a real focus trap + Escape-to-close for free;
+    // overlay (::backdrop) click also closes. Delete stays a POST form.
+    const byId = (id: string | null) =>
+      id ? (document.getElementById(id) as HTMLDialogElement | null) : null;
+
+    document.addEventListener("click", (e) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>(
+        "[data-open-dialog],[data-close-dialog]",
+      );
+      if (!el) return;
+      const openId = el.getAttribute("data-open-dialog");
+      if (openId) {
+        byId(openId)?.showModal();
+        return;
+      }
+      byId(el.getAttribute("data-close-dialog"))?.close();
+    });
+
+    // Click on the backdrop (outside the form) closes the dialog.
+    document.querySelectorAll<HTMLDialogElement>("dialog").forEach((d) => {
+      d.addEventListener("click", (e) => {
+        if (e.target === d) d.close();
+      });
+    });
+  </script>
+</AppLayout>

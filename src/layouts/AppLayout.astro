@@ -2,23 +2,102 @@
 import BaseLayout from "./BaseLayout.astro";
 import { siteConfig } from "@/config/site";
 import type { MetaInput } from "@/lib/seo";
+import AppSidebar from "@/components/layout/AppSidebar.astro";
 
 interface Props {
-	meta: MetaInput;
+  meta: MetaInput;
 }
 
 const { meta } = Astro.props;
-const year = new Date().getFullYear();
+// SSR-only shell: middleware guarantees a user on /app routes.
+const user = Astro.locals.user;
+const currentPath = Astro.url.pathname;
 ---
 
-<BaseLayout meta={meta}>
-	<!-- Placeholder header — replaced by Header component in Task 1.2 -->
-	<header>
-		<a href={siteConfig.appUrl}>{siteConfig.name}</a>
-	</header>
-	<main id="main-content">
-		<slot />
-	</main>
-	<!-- Placeholder footer — replaced by Footer component in Task 1.2 -->
-	<footer>&copy; {year} {siteConfig.name}</footer>
+<BaseLayout meta={{ ...meta, noindex: true }}>
+  <div class="flex min-h-screen flex-col bg-[var(--color-paper)]">
+    <!-- Top app bar -->
+    <header
+      class="sticky top-0 z-40 border-b-2 border-[var(--color-ink)] bg-[var(--color-paper)]"
+    >
+      <div class="flex h-16 items-center gap-3 px-4">
+        <button
+          type="button"
+          id="app-sidebar-toggle"
+          class="neo-button min-h-[44px] w-[44px] !px-0 md:hidden"
+          aria-label="Toggle navigation"
+          aria-expanded="false"
+          aria-controls="app-sidebar"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+          </svg>
+        </button>
+
+        <a
+          href="/app/dashboard"
+          class="font-[var(--font-heading)] text-xl font-extrabold tracking-tight text-[var(--color-ink)]"
+        >
+          {siteConfig.name}
+        </a>
+
+        <div class="ml-auto flex items-center gap-3">
+          {user && (
+            <span class="hidden text-sm text-[var(--color-ink)] sm:inline">
+              {user.email}
+            </span>
+          )}
+          <a
+            href="/logout"
+            class="inline-flex min-h-[44px] items-center px-3 font-semibold text-[var(--color-ink)] hover:underline underline-offset-4"
+          >
+            Sign out
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex flex-1">
+      <!-- Sidebar: static column on desktop, off-canvas drawer on mobile -->
+      <div
+        id="app-sidebar-overlay"
+        class="fixed inset-0 z-40 hidden bg-[rgba(23,23,23,0.5)] md:hidden"
+      >
+      </div>
+      <aside
+        id="app-sidebar"
+        class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full transform border-r-2 border-[var(--color-ink)] bg-[var(--color-paper)] transition-transform md:static md:z-auto md:w-56 md:translate-x-0"
+        aria-label="Sidebar"
+      >
+        <AppSidebar currentPath={currentPath} />
+      </aside>
+
+      <main id="main-content" class="min-w-0 flex-1 px-4 py-6 md:px-8">
+        <slot />
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Mobile drawer toggle. Accessible: button drives aria-expanded and the
+    // overlay/panel visibility; Escape and overlay click close it.
+    const toggle = document.getElementById("app-sidebar-toggle");
+    const sidebar = document.getElementById("app-sidebar");
+    const overlay = document.getElementById("app-sidebar-overlay");
+
+    const setOpen = (open: boolean) => {
+      if (!sidebar || !overlay || !toggle) return;
+      sidebar.classList.toggle("-translate-x-full", !open);
+      overlay.classList.toggle("hidden", !open);
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+
+    toggle?.addEventListener("click", () =>
+      setOpen(toggle.getAttribute("aria-expanded") !== "true"),
+    );
+    overlay?.addEventListener("click", () => setOpen(false));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setOpen(false);
+    });
+  </script>
 </BaseLayout>

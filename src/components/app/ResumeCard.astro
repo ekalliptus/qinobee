@@ -1,0 +1,123 @@
+---
+import NeoCard from "@components/ui/NeoCard.astro";
+import ScoreRing from "@components/ui/ScoreRing.astro";
+import StatusBadge from "@components/ui/StatusBadge.astro";
+import { getTemplate } from "@modules/resume/templates/registry";
+import { scoreResume } from "@modules/resume/scoring/engine";
+import type { ResumeDocument } from "@modules/resume/types";
+
+interface Props {
+  resume: ResumeDocument;
+}
+
+const { resume } = Astro.props;
+const template = getTemplate(resume.templateId);
+const overall = scoreResume(resume).overall;
+const fmt = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
+const updated = fmt.format(new Date(resume.updatedAt));
+const langLabel = resume.language === "id" ? "Bahasa Indonesia" : "English";
+
+// StatusBadge maps draft -> incomplete, complete -> complete, archived -> empty.
+const badgeStatus =
+  resume.status === "complete"
+    ? "complete"
+    : resume.status === "archived"
+      ? "empty"
+      : "incomplete";
+
+const renameId = `rename-${resume.id}`;
+const deleteId = `delete-${resume.id}`;
+---
+
+<NeoCard class="flex flex-col gap-4 p-5">
+  <div class="flex items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h3 class="truncate text-lg font-bold text-[var(--color-ink)]">{resume.title}</h3>
+      <p class="mt-0.5 text-sm text-[var(--color-ink)] opacity-70">
+        {template.name} · {langLabel}
+      </p>
+    </div>
+    <ScoreRing score={overall} size={64} label={`ATS score ${overall} out of 100`} />
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2 text-xs text-[var(--color-ink)]">
+    <StatusBadge status={badgeStatus} />
+    <span class="opacity-70">Updated {updated}</span>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    <a
+      href={`/app/resume/${resume.id}/edit`}
+      class="neo-button min-h-[44px] bg-[var(--color-yellow)] px-3 text-sm text-[var(--color-ink)]"
+    >
+      Edit
+    </a>
+    <a
+      href={`/app/resume/${resume.id}/export`}
+      class="neo-button min-h-[44px] bg-[var(--color-white)] px-3 text-sm text-[var(--color-ink)]"
+    >
+      Download PDF
+    </a>
+    <form method="POST" action={`/api/resume/${resume.id}/duplicate`}>
+      <button type="submit" class="neo-button min-h-[44px] bg-[var(--color-white)] px-3 text-sm text-[var(--color-ink)]">
+        Duplicate
+      </button>
+    </form>
+    <button
+      type="button"
+      class="neo-button min-h-[44px] bg-[var(--color-white)] px-3 text-sm text-[var(--color-ink)]"
+      data-open-dialog={renameId}
+    >
+      Rename
+    </button>
+    <button
+      type="button"
+      class="neo-button min-h-[44px] bg-[var(--color-red)] px-3 text-sm text-[var(--color-ink)]"
+      data-open-dialog={deleteId}
+    >
+      Delete
+    </button>
+  </div>
+
+  <!-- Rename dialog -->
+  <dialog id={renameId} class="neo-card w-[min(24rem,90vw)] p-5" aria-label="Rename resume">
+    <form method="POST" action={`/api/resume/${resume.id}/rename`} class="flex flex-col gap-3">
+      <label class="flex flex-col gap-1 text-sm font-semibold text-[var(--color-ink)]">
+        New title
+        <input
+          type="text"
+          name="title"
+          required
+          maxlength="160"
+          value={resume.title}
+          class="min-h-[44px] border-2 border-[var(--color-ink)] px-3"
+        />
+      </label>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="neo-button min-h-[44px] bg-[var(--color-white)] px-3 text-sm" data-close-dialog={renameId}>
+          Cancel
+        </button>
+        <button type="submit" class="neo-button min-h-[44px] bg-[var(--color-yellow)] px-3 text-sm">
+          Save
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Delete confirm dialog -->
+  <dialog id={deleteId} class="neo-card w-[min(24rem,90vw)] p-5" aria-label="Delete resume">
+    <form method="POST" action={`/api/resume/${resume.id}/delete`} class="flex flex-col gap-3">
+      <p class="text-sm text-[var(--color-ink)]">
+        Delete <strong>{resume.title}</strong>? This moves it to trash and removes it from your list.
+      </p>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="neo-button min-h-[44px] bg-[var(--color-white)] px-3 text-sm" data-close-dialog={deleteId}>
+          Cancel
+        </button>
+        <button type="submit" class="neo-button min-h-[44px] bg-[var(--color-red)] px-3 text-sm">
+          Delete
+        </button>
+      </div>
+    </form>
+  </dialog>
+</NeoCard>

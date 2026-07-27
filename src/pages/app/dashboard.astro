@@ -1,0 +1,105 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro";
+import NeoCard from "@components/ui/NeoCard.astro";
+import Button from "@components/ui/Button.astro";
+import ScoreRing from "@components/ui/ScoreRing.astro";
+import { getDb } from "@lib/db/client";
+import { createResumeService } from "@modules/resume/services/resume-service";
+import { scoreResume } from "@modules/resume/scoring/engine";
+
+export const prerender = false;
+
+const user = Astro.locals.user!; // guaranteed by middleware on /app
+const resumes = await createResumeService(getDb()).list(user.id);
+const latest = resumes[0];
+const latestScore = latest ? scoreResume(latest).overall : null;
+
+const fmt = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
+const recent = resumes.slice(0, 5);
+---
+
+<AppLayout meta={{ title: "Dashboard" }}>
+  <h1 class="mb-6 text-2xl font-extrabold text-[var(--color-ink)]">Dashboard</h1>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <!-- Profile completion (heuristic placeholder) -->
+    <NeoCard class="p-5">
+      <h2 class="mb-1 text-sm font-bold uppercase tracking-wide text-[var(--color-ink)]">
+        Profile completion
+      </h2>
+      <p class="text-3xl font-extrabold text-[var(--color-ink)]">65%</p>
+      <p class="mt-1 text-xs text-[var(--color-ink)] opacity-70">
+        Illustrative — career profile is coming soon.
+      </p>
+    </NeoCard>
+
+    <!-- Resume score -->
+    <NeoCard class="p-5">
+      <h2 class="mb-2 text-sm font-bold uppercase tracking-wide text-[var(--color-ink)]">
+        Resume score
+      </h2>
+      {
+        latestScore !== null ? (
+          <div class="flex items-center gap-4">
+            <ScoreRing score={latestScore} size={80} label={`Latest resume score ${latestScore} out of 100`} />
+            <div>
+              <p class="font-semibold text-[var(--color-ink)]">{latest!.title}</p>
+              <a href={`/app/resume/${latest!.id}/edit`} class="text-sm underline underline-offset-2">
+                Open editor
+              </a>
+            </div>
+          </div>
+        ) : (
+          <p class="text-sm text-[var(--color-ink)] opacity-70">
+            No resume yet. Create one to see your ATS score.
+          </p>
+        )
+      }
+    </NeoCard>
+
+    <!-- Quick actions -->
+    <NeoCard class="p-5">
+      <h2 class="mb-3 text-sm font-bold uppercase tracking-wide text-[var(--color-ink)]">
+        Quick actions
+      </h2>
+      <div class="flex flex-col gap-2">
+        <Button href="/app/resume/new" variant="primary" size="sm">Create CV</Button>
+        <Button variant="secondary" size="sm" disabled>Explore Jobs (Soon)</Button>
+        <Button variant="secondary" size="sm" disabled>Book a Mentor (Soon)</Button>
+      </div>
+    </NeoCard>
+  </div>
+
+  <!-- Recent resumes -->
+  <section class="mt-8">
+    <h2 class="mb-3 text-lg font-bold text-[var(--color-ink)]">Recent resumes</h2>
+    {
+      recent.length === 0 ? (
+        <NeoCard class="p-5">
+          <p class="text-sm text-[var(--color-ink)]">
+            You have not created a resume yet.
+          </p>
+          <div class="mt-3">
+            <Button href="/app/resume/new" variant="primary" size="sm">Create New CV</Button>
+          </div>
+        </NeoCard>
+      ) : (
+        <ul class="flex flex-col gap-2">
+          {recent.map((r) => (
+            <li>
+              <a
+                href={`/app/resume/${r.id}/edit`}
+                class="flex min-h-[44px] items-center justify-between gap-3 border-2 border-[var(--color-ink)] bg-[var(--color-white)] px-4 py-2 hover:bg-[var(--color-muted)]"
+              >
+                <span class="min-w-0 truncate font-semibold text-[var(--color-ink)]">{r.title}</span>
+                <span class="shrink-0 text-xs text-[var(--color-ink)] opacity-70">
+                  {fmt.format(new Date(r.updatedAt))}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+</AppLayout>
