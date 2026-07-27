@@ -116,18 +116,45 @@ Architecture details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
   Postgres/Supabase and swap the SQLite implementation. Migrate auth storage similarly (users,
   sessions, consent, rate limits currently live in SQLite via `src/lib/db/`).
 
-## Deployment
+## Deployment (Cloudflare Workers + D1)
 
-- Build with Bun: `bun run build` produces an Astro **Node standalone** server in `dist/` (adapter
-  `@astrojs/node`, `mode: standalone`).
-- **Run the built server with Bun** (or a Bun-compatible host/container) because `bun:sqlite` and
-  `Bun.password` are runtime dependencies.
-- Point `DATABASE_URL` at a SQLite file on a **persistent volume**; the schema migrates on startup.
-- Set `AUTH_SECRET` and `PUBLIC_SITE_URL`; set `AI_API_KEY` only if you want live AI.
-- **Serverless is not supported as-is** with the SQLite adapter (no persistent local filesystem /
-  Bun runtime guarantee). For serverless/edge, first swap the persistence layer (see above) and use
-  a hosted database.
-- Validate locally with `bun run build && bun run preview` before deploying.
+The app runs on **Cloudflare Workers** with **D1** (SQLite) via the `@astrojs/cloudflare` adapter.
+Persistence uses an async `SqlDb` adapter (`src/lib/db/`); D1 is resolved per-request from the
+`cloudflare:workers` `env` binding. All crypto is Web Crypto (PBKDF2 passwords, SHA-256 session
+token hashing, HMAC webhook signatures) — no Bun/Node-only APIs at runtime.
+
+Live: **https://qinobee.ekalliptus.workers.dev**
+
+Deploy steps:
+
+```bash
+# 1. One-time: create the D1 database and copy its id into wrangler.jsonc (d1_databases[].database_id)
+bunx wrangler d1 create qinobee
+
+# 2. Apply migrations (schema lives in migrations/0001_init.sql == src/lib/db/schema.sql)
+bunx wrangler d1 migrations apply qinobee --local
+bunx wrangler d1 migrations apply qinobee --remote
+
+# 3. Build + deploy
+bun run build
+bunx wrangler deploy
+```
+
+- Binding name must be `DB` (see `wrangler.jsonc`). Non-secret vars (`AI_BASE_URL`, `AI_MODEL`,
+  `PUBLIC_SITE_URL`) live in `wrangler.jsonc` `vars`.
+- Secrets: set only if used — `bunx wrangler secret put AI_API_KEY` (optional; without it AI uses the
+  rule-based fallback). `AUTH_SECRET` is declared for future CSRF use but not yet referenced in code.
+- The Cloudflare adapter also provisions a `SESSION` KV namespace and an `IMAGES` binding on first
+  deploy (Astro session storage / image service) — expected.
+- Local dev: `bun run dev` (the adapter's Vite plugin provides a D1-local binding from
+  `wrangler.jsonc`). Tests use an in-memory `bun:sqlite` `SqlDb` adapter and never touch D1.
+- Schema is applied via wrangler migrations (not at runtime). Keep `src/lib/db/schema.ts`,
+  `src/lib/db/schema.sql`, and `migrations/0001_init.sql` in sync (single source of truth noted in
+  each file).
+
+Note: `worker-configuration.d.ts` (from `wrangler types`) is gitignored and excluded from tsconfig —
+its global worker types clobber the DOM lib inside React islands. The project uses minimal local D1
+types in `src/lib/db/` instead.
 
 ## Testing
 
