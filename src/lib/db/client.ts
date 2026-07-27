@@ -1,6 +1,8 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import type { SqlDb } from "./adapter";
+import { createSqliteAdapter } from "./sqlite-adapter";
 import { migrate } from "./migrate";
 
 export function createDb(path?: string): Database {
@@ -14,6 +16,11 @@ export function createDb(path?: string): Database {
     db.run("PRAGMA journal_mode = WAL;");
   }
   return db;
+}
+
+/** Unmigrated bun:sqlite-backed SqlDb for tests. Callers run migrateDb. */
+export function createSqliteTestDb(path = ":memory:"): SqlDb {
+  return createSqliteAdapter(path);
 }
 
 let singleton: Database | null = null;
