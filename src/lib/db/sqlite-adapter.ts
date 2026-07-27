@@ -67,3 +67,8 @@ export function createSqliteAdapter(path = ":memory:"): SqlDb {
   }
   return new BunSqlDb(db);
 }
+
+/** Wrap an existing bun:sqlite Database in the SqlDb adapter (no re-open/migrate). */
+export function adaptSqlite(db: Database): SqlDb {
+  return new BunSqlDb(db);
+}

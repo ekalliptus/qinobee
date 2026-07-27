@@ -5,7 +5,7 @@ import Container from "@/components/ui/Container.astro";
 import NeoCard from "@/components/ui/NeoCard.astro";
 import Button from "@/components/ui/Button.astro";
 import Alert from "@/components/ui/Alert.astro";
-import { getDb } from "@/lib/db/client";
+import { getSqlDb } from "@/lib/db/client";
 import { AuthService } from "@/lib/auth/service";
 import { rateLimit } from "@/lib/rate-limit";
 import { SESSION_COOKIE, cookieOptions } from "@/lib/auth/cookies";
@@ -22,14 +22,14 @@ if (Astro.request.method === "POST") {
   const confirm = String(form.get("confirm") ?? "");
 
   const ip = Astro.clientAddress || "unknown";
-  const limit = rateLimit(getDb(), `register:${ip}`, 10, 600);
+  const limit = await rateLimit(getSqlDb(), `register:${ip}`, 10, 600);
 
   if (!limit.allowed) {
     error = "Too many attempts. Please try again later.";
   } else if (password !== confirm) {
     error = "Passwords do not match.";
   } else {
-    const auth = new AuthService(getDb());
+    const auth = new AuthService(getSqlDb());
     try {
       await auth.register(emailValue, password);
       const sess = await auth.login(emailValue, password);

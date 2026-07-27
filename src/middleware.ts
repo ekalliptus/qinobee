@@ -13,10 +13,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Only touch the DB when there is a session to validate or a guarded route.
   // Keeps bun:sqlite out of the module graph for prerendered pages at build.
   if (hasCookie || isAppRoute) {
-    const { getDb } = await import("@/lib/db/client");
+    const { getSqlDb } = await import("@/lib/db/client");
     const { AuthService } = await import("@/lib/auth/service");
     const { getSessionUser } = await import("@/lib/auth/middleware");
-    const auth = new AuthService(getDb());
+    const auth = new AuthService(getSqlDb());
     context.locals.user = (await getSessionUser(auth, context.cookies)) ?? undefined;
   }
 

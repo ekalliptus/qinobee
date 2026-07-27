@@ -2,7 +2,7 @@ import type { APIContext } from "astro";
 import type { SessionUser } from "@lib/auth/service";
 import { AuthService } from "@lib/auth/service";
 import { getSessionUser } from "@lib/auth/middleware";
-import { getDb } from "@lib/db/client";
+import { getSqlDb } from "@lib/db/client";
 
 const MAX_BODY = 65536; // 64 KiB — form actions carry only small metadata.
 
@@ -36,7 +36,7 @@ export async function guardFormAction(ctx: APIContext): Promise<SessionUser | Re
     return new Response("Payload Too Large", { status: 413 });
   }
 
-  const user = (await getSessionUser(new AuthService(getDb()), cookies)) ?? locals.user;
+  const user = (await getSessionUser(new AuthService(getSqlDb()), cookies)) ?? locals.user;
   if (!user) return new Response("Unauthorized", { status: 401 });
   return user;
 }

@@ -1,16 +1,16 @@
 import { test, expect } from "bun:test";
-import { createDb } from "@lib/db/client";
-import { migrate } from "@lib/db/migrate";
+import { createSqliteAdapter } from "@lib/db/sqlite-adapter";
+import { migrateDb } from "@lib/db/migrate";
 import { AuthService } from "@lib/auth/service";
 
-function svc() {
-  const db = createDb(":memory:");
-  migrate(db);
+async function svc() {
+  const db = createSqliteAdapter(":memory:");
+  await migrateDb(db);
   return new AuthService(db);
 }
 
 test("register then login issues session; wrong password fails", async () => {
-  const auth = svc();
+  const auth = await svc();
   const user = await auth.register("a@b.com", "s3cret!pw");
   const sess = await auth.login("a@b.com", "s3cret!pw");
   expect(sess.userId).toBe(user.id);
@@ -19,13 +19,13 @@ test("register then login issues session; wrong password fails", async () => {
 });
 
 test("duplicate email rejected", async () => {
-  const auth = svc();
+  const auth = await svc();
   await auth.register("dupe@b.com", "s3cret!pw");
   await expect(auth.register("dupe@b.com", "another!pw")).rejects.toThrow();
 });
 
 test("validateSession returns user; logout revokes it", async () => {
-  const auth = svc();
+  const auth = await svc();
   await auth.register("c@b.com", "s3cret!pw");
   const sess = await auth.login("c@b.com", "s3cret!pw");
   const u = await auth.validateSession(sess.token);
@@ -35,7 +35,7 @@ test("validateSession returns user; logout revokes it", async () => {
 });
 
 test("expired session invalid", async () => {
-  const auth = svc();
+  const auth = await svc();
   await auth.register("d@b.com", "s3cret!pw");
   const sess = await auth.login("d@b.com", "s3cret!pw", {
     expiresAt: new Date(Date.now() - 1000).toISOString(),
@@ -44,7 +44,7 @@ test("expired session invalid", async () => {
 });
 
 test("unknown email and wrong password throw the same error", async () => {
-  const auth = svc();
+  const auth = await svc();
   await auth.register("e@b.com", "s3cret!pw");
   let unknownMsg = "";
   let wrongMsg = "";

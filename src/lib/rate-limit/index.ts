@@ -1,4 +1,4 @@
-import type { Database } from "bun:sqlite";
+import type { SqlDb } from "@/lib/db/adapter";
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -10,23 +10,25 @@ export interface RateLimitResult {
  * @param windowSeconds size of the window in seconds.
  * @param limit max hits allowed within a window.
  */
-export function rateLimit(
-  db: Database,
+export async function rateLimit(
+  db: SqlDb,
   key: string,
   limit: number,
   windowSeconds: number,
-): RateLimitResult {
+): Promise<RateLimitResult> {
   const windowStart = Math.floor(Date.now() / 1000 / windowSeconds) * windowSeconds;
-  const row = db
-    .query(
+  const row = await db
+    .prepare(
       `INSERT INTO rate_limits (key, window_start, count)
        VALUES (?, ?, 1)
        ON CONFLICT(key, window_start) DO UPDATE SET count = count + 1
        RETURNING count`,
     )
-    .get(key, windowStart) as { count: number };
+    .bind(key, windowStart)
+    .first<{ count: number }>();
+  const count = row?.count ?? 0;
   return {
-    allowed: row.count <= limit,
-    remaining: Math.max(0, limit - row.count),
+    allowed: count <= limit,
+    remaining: Math.max(0, limit - count),
   };
 }

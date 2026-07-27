@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getDb } from "@lib/db/client";
+import { getDb, getSqlDb } from "@lib/db/client";
 import { AuthService } from "@lib/auth/service";
 import { getSessionUser } from "@lib/auth/middleware";
 import { createResumeService } from "@modules/resume/services/resume-service";
@@ -25,15 +25,13 @@ async function respond(userId: string, resumeId: string): Promise<Response> {
 }
 
 export const GET: APIRoute = async ({ params, locals, cookies }) => {
-  const db = getDb();
-  const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
+  const user = (await getSessionUser(new AuthService(getSqlDb()), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
   return respond(user.id, params.id!);
 };
 
 export const POST: APIRoute = async ({ params, locals, cookies }) => {
-  const db = getDb();
-  const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
+  const user = (await getSessionUser(new AuthService(getSqlDb()), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
   return respond(user.id, params.id!);
 };

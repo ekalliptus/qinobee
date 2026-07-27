@@ -1,4 +1,4 @@
-import type { Database } from "bun:sqlite";
+import type { SqlDb } from "@/lib/db/adapter";
 import { z } from "zod";
 import { hashPassword, verifyPassword } from "./password";
 import { newSessionToken, hashToken, sessionExpiry } from "./session";
@@ -21,25 +21,28 @@ export interface SessionUser {
 const INVALID_CREDENTIALS = "Invalid email or password";
 
 export class AuthService {
-  constructor(private db: Database) {}
+  constructor(private db: SqlDb) {}
 
   async register(rawEmail: string, rawPassword: string): Promise<SessionUser> {
     const email = emailSchema.parse(rawEmail);
     const password = passwordSchema.parse(rawPassword);
 
-    const existing = this.db
-      .query("SELECT id FROM users WHERE email = ?")
-      .get(email);
+    const existing = await this.db
+      .prepare("SELECT id FROM users WHERE email = ?")
+      .bind(email)
+      .first();
     if (existing) throw new Error("Email already registered");
 
     const id = crypto.randomUUID();
     const passwordHash = await hashPassword(password);
     const now = new Date().toISOString();
     try {
-      this.db.run(
-        "INSERT INTO users (id, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
-        [id, email, passwordHash, now],
-      );
+      await this.db
+        .prepare(
+          "INSERT INTO users (id, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
+        )
+        .bind(id, email, passwordHash, now)
+        .run();
     } catch {
       // UNIQUE race
       throw new Error("Email already registered");
@@ -53,9 +56,10 @@ export class AuthService {
     opts?: { expiresAt?: string },
   ): Promise<SessionResult> {
     const email = emailSchema.parse(rawEmail);
-    const user = this.db
-      .query("SELECT id, password_hash FROM users WHERE email = ?")
-      .get(email) as { id: string; password_hash: string } | null;
+    const user = await this.db
+      .prepare("SELECT id, password_hash FROM users WHERE email = ?")
+      .bind(email)
+      .first<{ id: string; password_hash: string }>();
 
     if (!user) {
       // Hash a dummy (valid pbkdf2 shape) to keep timing similar and avoid enumeration.
@@ -74,32 +78,41 @@ export class AuthService {
     const sessionId = crypto.randomUUID();
     const now = new Date().toISOString();
     const expiresAt = opts?.expiresAt ?? sessionExpiry();
-    this.db.run(
-      "INSERT INTO sessions (id, user_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)",
-      [sessionId, user.id, tokenHash, expiresAt, now],
-    );
+    await this.db
+      .prepare(
+        "INSERT INTO sessions (id, user_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)",
+      )
+      .bind(sessionId, user.id, tokenHash, expiresAt, now)
+      .run();
     return { userId: user.id, token, sessionId };
   }
 
   async validateSession(token: string): Promise<SessionUser | null> {
     const tokenHash = await hashToken(token);
     const now = new Date().toISOString();
-    const row = this.db
-      .query(
+    const row = await this.db
+      .prepare(
         `SELECT u.id AS id, u.email AS email, s.expires_at AS expires_at
          FROM sessions s JOIN users u ON u.id = s.user_id
          WHERE s.token_hash = ?`,
       )
-      .get(tokenHash) as { id: string; email: string; expires_at: string } | null;
+      .bind(tokenHash)
+      .first<{ id: string; email: string; expires_at: string }>();
     if (!row) return null;
     if (row.expires_at <= now) {
-      this.db.run("DELETE FROM sessions WHERE token_hash = ?", [tokenHash]);
+      await this.db
+        .prepare("DELETE FROM sessions WHERE token_hash = ?")
+        .bind(tokenHash)
+        .run();
       return null;
     }
     return { id: row.id, email: row.email };
   }
 
   async logout(token: string): Promise<void> {
-    this.db.run("DELETE FROM sessions WHERE token_hash = ?", [await hashToken(token)]);
+    await this.db
+      .prepare("DELETE FROM sessions WHERE token_hash = ?")
+      .bind(await hashToken(token))
+      .run();
   }
 }

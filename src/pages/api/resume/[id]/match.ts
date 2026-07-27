@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { getDb } from "@lib/db/client";
+import { getDb, getSqlDb } from "@lib/db/client";
 import { AuthService } from "@lib/auth/service";
 import { getSessionUser } from "@lib/auth/middleware";
 import { createResumeService } from "@modules/resume/services/resume-service";
@@ -22,7 +22,7 @@ const bodySchema = z.object({
 
 export const POST: APIRoute = async ({ params, request, locals, cookies }) => {
   const db = getDb();
-  const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
+  const user = (await getSessionUser(new AuthService(getSqlDb()), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
 
   const declared = request.headers.get("content-length");

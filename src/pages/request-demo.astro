@@ -6,7 +6,7 @@ import NeoCard from "@/components/ui/NeoCard.astro";
 import Button from "@/components/ui/Button.astro";
 import Alert from "@/components/ui/Alert.astro";
 import SectionLabel from "@/components/ui/SectionLabel.astro";
-import { getDb } from "@/lib/db/client";
+import { getDb, getSqlDb } from "@/lib/db/client";
 import { DemoService } from "@/lib/services/demo-service";
 import { demoSchema, SOLUTIONS } from "@/lib/services/demo-schema";
 import { rateLimit } from "@/lib/rate-limit";
@@ -37,7 +37,7 @@ const v = {
 if (Astro.request.method === "POST") {
   const form = await Astro.request.formData();
   const ip = Astro.clientAddress || "unknown";
-  const limit = rateLimit(getDb(), `demo:${ip}`, 5, 600);
+  const limit = await rateLimit(getSqlDb(), `demo:${ip}`, 5, 600);
 
   const honey = String(form.get("company_website") ?? "");
 

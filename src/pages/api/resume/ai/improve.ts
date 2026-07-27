@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getDb } from "@lib/db/client";
+import { getSqlDb } from "@lib/db/client";
 import { AuthService } from "@lib/auth/service";
 import { getSessionUser } from "@lib/auth/middleware";
 import { hasAiConsent } from "@lib/auth/consent";
@@ -16,14 +16,14 @@ function json(body: unknown, status: number): Response {
 }
 
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
-  const db = getDb();
+  const db = getSqlDb();
   const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
 
   const declared = request.headers.get("content-length");
   if (declared && Number(declared) > MAX_BODY) return json({ ok: false }, 413);
 
-  const rl = rateLimit(db, `ai:${user.id}`, 30, 60);
+  const rl = await rateLimit(db, `ai:${user.id}`, 30, 60);
   if (!rl.allowed) return json({ ok: false, error: "rate_limited" }, 429);
 
   let body: unknown;
@@ -36,7 +36,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
   try {
     const result = await handleImprove({
       user,
-      consentGiven: hasAiConsent(db, user.id),
+      consentGiven: await hasAiConsent(db, user.id),
       aiService: getAiService(),
       body,
     });
