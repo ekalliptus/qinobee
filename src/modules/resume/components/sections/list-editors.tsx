@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { moveUp, moveDown, moveToTop, moveToBottom } from "@modules/resume/utils/reorder";
 
 const BTN = "neo-button min-h-[44px] px-3 text-sm bg-[var(--color-white)] text-[var(--color-ink)]";
@@ -112,6 +113,12 @@ export function BulletList(props: {
   label: string;
   values: string[];
   onChange: (next: string[]) => void;
+  /** Optional extra UI rendered under each bullet (e.g. AI assist). */
+  renderExtra?: (
+    value: string,
+    onApply: (v: string) => void,
+    index: number,
+  ) => ReactNode;
 }) {
   const reorder = (fn: (arr: unknown[]) => unknown[]) =>
     props.onChange(fn(props.values) as string[]);
@@ -120,27 +127,34 @@ export function BulletList(props: {
       <span className="font-medium text-[var(--color-ink)]">{props.label}</span>
       <ul className="flex flex-col gap-2" aria-label={props.label}>
         {props.values.map((bullet, i) => (
-          <li key={i} className="flex flex-col gap-1 sm:flex-row sm:items-start">
-            <textarea
-              className="neo-input min-h-[44px] flex-1 py-2"
-              rows={2}
-              aria-label={`${props.label} item ${i + 1}`}
-              value={bullet}
-              onChange={(e) =>
-                props.onChange(props.values.map((v, j) => (j === i ? e.target.value : v)))
-              }
-            />
-            <div className="flex gap-1">
-              <ReorderControls index={i} length={props.values.length} label={`${props.label} item ${i + 1}`} onReorder={reorder} />
-              <button
-                type="button"
-                className={BTN_DANGER}
-                aria-label={`Remove ${props.label} item ${i + 1}`}
-                onClick={() => props.onChange(props.values.filter((_, j) => j !== i))}
-              >
-                ✕
-              </button>
+          <li key={i} className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-start">
+              <textarea
+                className="neo-input min-h-[44px] flex-1 py-2"
+                rows={2}
+                aria-label={`${props.label} item ${i + 1}`}
+                value={bullet}
+                onChange={(e) =>
+                  props.onChange(props.values.map((v, j) => (j === i ? e.target.value : v)))
+                }
+              />
+              <div className="flex gap-1">
+                <ReorderControls index={i} length={props.values.length} label={`${props.label} item ${i + 1}`} onReorder={reorder} />
+                <button
+                  type="button"
+                  className={BTN_DANGER}
+                  aria-label={`Remove ${props.label} item ${i + 1}`}
+                  onClick={() => props.onChange(props.values.filter((_, j) => j !== i))}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
+            {props.renderExtra?.(
+              bullet,
+              (v) => props.onChange(props.values.map((old, j) => (j === i ? v : old))),
+              i,
+            )}
           </li>
         ))}
       </ul>

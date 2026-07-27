@@ -1,4 +1,5 @@
 import type { ResumeDocument, WorkExperience } from "@modules/resume/types";
+import type { RenderAiAssist } from "../AiPanel";
 import { TextField, SelectField, CheckboxField } from "./fields";
 import { BulletList, TagList, ItemToolbar, BTN } from "./list-editors";
 
@@ -32,7 +33,11 @@ function emptyExperience(): WorkExperience {
   };
 }
 
-export default function WorkExperienceSection(props: { doc: ResumeDocument; update: Updater }) {
+export default function WorkExperienceSection(props: {
+  doc: ResumeDocument;
+  update: Updater;
+  renderAiAssist?: RenderAiAssist;
+}) {
   const items = props.doc.workExperiences;
   const setItems = (next: WorkExperience[]) =>
     props.update((prev) => ({ ...prev, workExperiences: next }));
@@ -95,7 +100,17 @@ export default function WorkExperienceSection(props: { doc: ResumeDocument; upda
             }
           />
 
-          <BulletList label="Bullets" values={it.bullets} onChange={(bullets) => patchItem(i, { bullets })} />
+          <BulletList
+            label="Bullets"
+            values={it.bullets}
+            onChange={(bullets) => patchItem(i, { bullets })}
+            renderExtra={
+              props.renderAiAssist
+                ? (value, onApply) =>
+                    props.renderAiAssist!({ kind: "bullet", text: value, onApply })
+                : undefined
+            }
+          />
           <TagList label="Skills used" values={it.skillsUsed} onChange={(skillsUsed) => patchItem(i, { skillsUsed })} />
 
           <ItemToolbar

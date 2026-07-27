@@ -12,6 +12,10 @@ import ProjectsSection from "./sections/ProjectsSection";
 import SkillsSection from "./sections/SkillsSection";
 import Preview from "./Preview";
 import TemplatePanel from "./TemplatePanel";
+import ScorePanel from "./ScorePanel";
+import MatchPanel from "./MatchPanel";
+import { AiAssistField, type RenderAiAssist } from "./AiPanel";
+import { features } from "@/config/features";
 import type { ResumeTemplateSettings } from "@modules/resume/types";
 
 /** Editable subset only — the exact keys accepted by updateResumeInputSchema. */
@@ -68,14 +72,15 @@ function ActiveSection(props: {
   active: SectionKey;
   doc: ResumeDocument;
   update: (fn: (prev: ResumeDocument) => ResumeDocument) => void;
+  renderAiAssist?: RenderAiAssist;
 }) {
   switch (props.active) {
     case "personalInformation":
       return <PersonalInfoSection doc={props.doc} update={props.update} />;
     case "professionalSummary":
-      return <SummarySection doc={props.doc} update={props.update} />;
+      return <SummarySection doc={props.doc} update={props.update} renderAiAssist={props.renderAiAssist} />;
     case "workExperiences":
-      return <WorkExperienceSection doc={props.doc} update={props.update} />;
+      return <WorkExperienceSection doc={props.doc} update={props.update} renderAiAssist={props.renderAiAssist} />;
     case "educations":
       return <EducationSection doc={props.doc} update={props.update} />;
     case "projects":
@@ -93,6 +98,35 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
   const [mobileTab, setMobileTab] = useState<MobileTab>("edit");
   const [conflictDismissed, setConflictDismissed] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showScore, setShowScore] = useState(false);
+  const [showMatch, setShowMatch] = useState(false);
+  const [aiConsent, setAiConsent] = useState(false);
+
+  useEffect(() => {
+    if (!features.aiAssist) return;
+    let alive = true;
+    fetch("/api/resume/ai/consent")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { consent?: boolean } | null) => {
+        if (alive && d?.consent) setAiConsent(true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const renderAiAssist: RenderAiAssist | undefined = features.aiAssist
+    ? ({ kind, text, onApply }) => (
+        <AiAssistField
+          kind={kind}
+          text={text}
+          consented={aiConsent}
+          onConsented={() => setAiConsent(true)}
+          onApply={onApply}
+        />
+      )
+    : undefined;
 
   const templatePanel = (
     <TemplatePanel
@@ -118,7 +152,7 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
     <SectionNav doc={store.doc} active={active} onSelect={setActive} />
   );
   const form = (
-    <ActiveSection active={active} doc={store.doc} update={updateFn} />
+    <ActiveSection active={active} doc={store.doc} update={updateFn} renderAiAssist={renderAiAssist} />
   );
   const previewPane = (
     <div className="flex min-w-0 flex-col gap-2">
@@ -152,6 +186,24 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
             onClick={() => setShowTemplates((v) => !v)}
           >
             Template
+          </button>
+          <button
+            type="button"
+            className={BTN}
+            aria-pressed={showScore}
+            aria-expanded={showScore}
+            onClick={() => setShowScore((v) => !v)}
+          >
+            ATS Score
+          </button>
+          <button
+            type="button"
+            className={BTN}
+            aria-pressed={showMatch}
+            aria-expanded={showMatch}
+            onClick={() => setShowMatch((v) => !v)}
+          >
+            Match With a Job
           </button>
           <a
             href={`/app/resume/${store.doc.id}/export`}
@@ -197,6 +249,16 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
         </div>
       ) : null}
 
+      {/* ATS Score panel (desktop toggle; always available on mobile Score tab) */}
+      {showScore ? (
+        <div className="hidden md:block">
+          <ScorePanel resumeId={store.doc.id} />
+        </div>
+      ) : null}
+
+      {/* Match With a Job panel */}
+      {showMatch ? <MatchPanel resumeId={store.doc.id} /> : null}
+
       {/* Mobile segmented control */}
       <div className="flex gap-2 md:hidden" role="tablist" aria-label="Editor view">
         {(["edit", "preview", "score"] as const).map((t) => (
@@ -227,7 +289,7 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
         ) : mobileTab === "preview" ? (
           <Preview resume={store.doc} />
         ) : (
-          <div className="neo-card">Score coming in a later step.</div>
+          <ScorePanel resumeId={store.doc.id} />
         )}
       </div>
 
