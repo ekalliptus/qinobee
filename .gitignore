@@ -25,3 +25,6 @@ data/*.sqlite-shm
 
 # jetbrains setting folder
 .idea/
+
+# wrangler-generated worker types (clobbers DOM lib in React islands; we use local types)
+worker-configuration.d.ts

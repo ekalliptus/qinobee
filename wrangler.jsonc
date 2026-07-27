@@ -1,7 +1,7 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
 	"compatibility_date": "2026-07-27",
-	"compatibility_flags": ["global_fetch_strictly_public"],
+	"compatibility_flags": ["global_fetch_strictly_public", "nodejs_compat"],
 	"name": "qinobee",
 	"main": "@astrojs/cloudflare/entrypoints/server",
 	"assets": {
@@ -10,5 +10,18 @@
 	},
 	"observability": {
 		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "qinobee",
+			"database_id": "6b7bcbbd-b8b9-4692-b76c-7061a3953c6a",
+			"migrations_dir": "migrations"
+		}
+	],
+	"vars": {
+		"AI_BASE_URL": "https://router.ekalliptus.com/v1",
+		"AI_MODEL": "gaskeun",
+		"PUBLIC_SITE_URL": "https://qinobee.ekalliptus.workers.dev"
 	}
 }
