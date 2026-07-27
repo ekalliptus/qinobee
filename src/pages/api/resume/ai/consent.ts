@@ -11,16 +11,16 @@ function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
 }
 
-export const GET: APIRoute = ({ locals, cookies }) => {
+export const GET: APIRoute = async ({ locals, cookies }) => {
   const db = getDb();
-  const user = getSessionUser(new AuthService(db), cookies) ?? locals.user;
+  const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
   return json({ ok: true, consent: hasAiConsent(db, user.id) }, 200);
 };
 
-export const POST: APIRoute = ({ locals, cookies }) => {
+export const POST: APIRoute = async ({ locals, cookies }) => {
   const db = getDb();
-  const user = getSessionUser(new AuthService(db), cookies) ?? locals.user;
+  const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
   setAiConsent(db, user.id);
   return json({ ok: true, consent: true }, 200);

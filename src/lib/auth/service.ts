@@ -58,8 +58,11 @@ export class AuthService {
       .get(email) as { id: string; password_hash: string } | null;
 
     if (!user) {
-      // Hash a dummy to keep timing similar and avoid enumeration.
-      await verifyPassword(rawPassword, "$argon2id$v=19$m=65536,t=2,p=1$AAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+      // Hash a dummy (valid pbkdf2 shape) to keep timing similar and avoid enumeration.
+      await verifyPassword(
+        rawPassword,
+        `pbkdf2$100000$${"A".repeat(22)}$${"A".repeat(43)}`,
+      );
       throw new Error(INVALID_CREDENTIALS);
     }
 
@@ -67,7 +70,7 @@ export class AuthService {
     if (!ok) throw new Error(INVALID_CREDENTIALS);
 
     const token = newSessionToken();
-    const tokenHash = hashToken(token);
+    const tokenHash = await hashToken(token);
     const sessionId = crypto.randomUUID();
     const now = new Date().toISOString();
     const expiresAt = opts?.expiresAt ?? sessionExpiry();
@@ -78,8 +81,8 @@ export class AuthService {
     return { userId: user.id, token, sessionId };
   }
 
-  validateSession(token: string): SessionUser | null {
-    const tokenHash = hashToken(token);
+  async validateSession(token: string): Promise<SessionUser | null> {
+    const tokenHash = await hashToken(token);
     const now = new Date().toISOString();
     const row = this.db
       .query(
@@ -96,7 +99,7 @@ export class AuthService {
     return { id: row.id, email: row.email };
   }
 
-  logout(token: string): void {
-    this.db.run("DELETE FROM sessions WHERE token_hash = ?", [hashToken(token)]);
+  async logout(token: string): Promise<void> {
+    this.db.run("DELETE FROM sessions WHERE token_hash = ?", [await hashToken(token)]);
   }
 }

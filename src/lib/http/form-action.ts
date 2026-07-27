@@ -14,7 +14,7 @@ const MAX_BODY = 65536; // 64 KiB — form actions carry only small metadata.
  * mismatched Origin is a cheap CSRF backstop for same-site subresource abuse.
  * Returns the user on success, or a Response to short-circuit the handler.
  */
-export function guardFormAction(ctx: APIContext): SessionUser | Response {
+export async function guardFormAction(ctx: APIContext): Promise<SessionUser | Response> {
   const { request, cookies, locals } = ctx;
 
   // Same-origin: if an Origin header is present it must match this host.
@@ -36,7 +36,7 @@ export function guardFormAction(ctx: APIContext): SessionUser | Response {
     return new Response("Payload Too Large", { status: 413 });
   }
 
-  const user = getSessionUser(new AuthService(getDb()), cookies) ?? locals.user;
+  const user = (await getSessionUser(new AuthService(getDb()), cookies)) ?? locals.user;
   if (!user) return new Response("Unauthorized", { status: 401 });
   return user;
 }

@@ -28,10 +28,10 @@ test("validateSession returns user; logout revokes it", async () => {
   const auth = svc();
   await auth.register("c@b.com", "s3cret!pw");
   const sess = await auth.login("c@b.com", "s3cret!pw");
-  const u = auth.validateSession(sess.token);
+  const u = await auth.validateSession(sess.token);
   expect(u?.email).toBe("c@b.com");
-  auth.logout(sess.token);
-  expect(auth.validateSession(sess.token)).toBeNull();
+  await auth.logout(sess.token);
+  expect(await auth.validateSession(sess.token)).toBeNull();
 });
 
 test("expired session invalid", async () => {
@@ -40,7 +40,7 @@ test("expired session invalid", async () => {
   const sess = await auth.login("d@b.com", "s3cret!pw", {
     expiresAt: new Date(Date.now() - 1000).toISOString(),
   });
-  expect(auth.validateSession(sess.token)).toBeNull();
+  expect(await auth.validateSession(sess.token)).toBeNull();
 });
 
 test("unknown email and wrong password throw the same error", async () => {

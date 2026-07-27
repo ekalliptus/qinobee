@@ -22,7 +22,7 @@ const bodySchema = z.object({
 
 export const POST: APIRoute = async ({ params, request, locals, cookies }) => {
   const db = getDb();
-  const user = getSessionUser(new AuthService(db), cookies) ?? locals.user;
+  const user = (await getSessionUser(new AuthService(db), cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
 
   const declared = request.headers.get("content-length");

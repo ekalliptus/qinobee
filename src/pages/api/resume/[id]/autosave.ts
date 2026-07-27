@@ -18,7 +18,7 @@ function json(body: unknown, status: number): Response {
 export const POST: APIRoute = async ({ params, request, locals, cookies }) => {
   const db = getDb();
   const auth = new AuthService(db);
-  const user = getSessionUser(auth, cookies) ?? locals.user;
+  const user = (await getSessionUser(auth, cookies)) ?? locals.user;
   if (!user) return json({ ok: false }, 401);
 
   const declared = request.headers.get("content-length");

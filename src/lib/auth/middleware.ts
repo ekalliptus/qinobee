@@ -7,9 +7,9 @@ export { SESSION_COOKIE, cookieOptions } from "./cookies";
 export function getSessionUser(
   auth: AuthService,
   cookies: AstroCookies,
-): SessionUser | null {
+): Promise<SessionUser | null> {
   const token = cookies.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
+  if (!token) return Promise.resolve(null);
   return auth.validateSession(token);
 }
 

@@ -8,13 +8,13 @@ test("password round trip", async () => {
   expect(await verifyPassword("wrong", h)).toBe(false);
 });
 
-test("session token high entropy hash stable", () => {
+test("session token high entropy hash stable", async () => {
   const t = newSessionToken();
   expect(t.length).toBeGreaterThanOrEqual(43);
-  expect(hashToken(t)).toBe(hashToken(t));
-  expect(hashToken(t)).not.toBe(t);
+  expect(await hashToken(t)).toBe(await hashToken(t));
+  expect(await hashToken(t)).not.toBe(t);
 });
 
-test("distinct tokens hash differently", () => {
-  expect(hashToken(newSessionToken())).not.toBe(hashToken(newSessionToken()));
+test("distinct tokens hash differently", async () => {
+  expect(await hashToken(newSessionToken())).not.toBe(await hashToken(newSessionToken()));
 });

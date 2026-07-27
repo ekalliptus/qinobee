@@ -10,7 +10,7 @@ export const prerender = false;
 const titleSchema = nonEmpty(160);
 
 export const POST: APIRoute = async (ctx) => {
-  const guard = guardFormAction(ctx);
+  const guard = await guardFormAction(ctx);
   if (guard instanceof Response) return guard;
 
   const form = await ctx.request.formData();

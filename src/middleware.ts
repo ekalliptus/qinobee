@@ -17,7 +17,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const { AuthService } = await import("@/lib/auth/service");
     const { getSessionUser } = await import("@/lib/auth/middleware");
     const auth = new AuthService(getDb());
-    context.locals.user = getSessionUser(auth, context.cookies) ?? undefined;
+    context.locals.user = (await getSessionUser(auth, context.cookies)) ?? undefined;
   }
 
   if (isAppRoute && !context.locals.user) {

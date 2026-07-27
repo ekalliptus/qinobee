@@ -7,7 +7,7 @@ import { guardFormAction } from "@lib/http/form-action";
 export const prerender = false;
 
 export const POST: APIRoute = async (ctx) => {
-  const guard = guardFormAction(ctx);
+  const guard = await guardFormAction(ctx);
   if (guard instanceof Response) return guard;
 
   const svc = createResumeService(getDb());
