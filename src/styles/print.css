@@ -1,0 +1,25 @@
+/* A4 resume page geometry + print rules. Shared by on-screen preview and export. */
+
+.resume-page {
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  margin: 0 auto;
+  box-shadow: 8px 8px 0 0 var(--color-ink, #111);
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .resume-page {
+    box-shadow: none;
+    margin: 0;
+  }
+}

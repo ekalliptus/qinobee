@@ -1,0 +1,65 @@
+---
+import { features } from "@/config/features";
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+
+interface Item {
+  label: string;
+  href: string;
+  soon?: boolean;
+}
+
+// MVP: every signed-in user is a student. The `role` concept is kept implicit
+// here — this nav is the student surface. "Soon" items are feature-flagged and
+// not yet built; they render as disabled rather than dead 404 links.
+const items: Item[] = [
+  { label: "Overview", href: "/app/dashboard" },
+  { label: "Resumes", href: "/app/resume" },
+  { label: "Cover Letters", href: "/app/cover-letter", soon: !features.coverLetter },
+  { label: "Career Profile", href: "/app/career-profile", soon: true },
+];
+
+function isActive(href: string): boolean {
+  return currentPath === href || currentPath.startsWith(href + "/");
+}
+---
+
+<nav aria-label="App" class="p-3">
+  <ul class="flex flex-col gap-1">
+    {
+      items.map((item) =>
+        item.soon ? (
+          <li>
+            <span
+              class="flex min-h-[44px] items-center justify-between gap-2 rounded-[var(--radius-sm)] px-3 font-semibold text-[var(--color-ink)] opacity-50"
+              aria-disabled="true"
+            >
+              {item.label}
+              <span class="border-2 border-[var(--color-ink)] bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] font-bold uppercase">
+                Soon
+              </span>
+            </span>
+          </li>
+        ) : (
+          <li>
+            <a
+              href={item.href}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              class:list={[
+                "flex min-h-[44px] items-center rounded-[var(--radius-sm)] px-3 font-semibold text-[var(--color-ink)] hover:bg-[var(--color-muted)]",
+                isActive(item.href) &&
+                  "bg-[var(--color-ink)] text-[var(--color-paper)] hover:bg-[var(--color-ink)]",
+              ]}
+            >
+              {item.label}
+            </a>
+          </li>
+        ),
+      )
+    }
+  </ul>
+</nav>

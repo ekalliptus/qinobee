@@ -1,0 +1,22 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import AnnouncementBar from "@/components/layout/AnnouncementBar.astro";
+import Header from "@/components/layout/Header.astro";
+import Footer from "@/components/layout/Footer.astro";
+import type { MetaInput } from "@/lib/seo";
+
+interface Props {
+	meta: MetaInput;
+}
+
+const { meta } = Astro.props;
+---
+
+<BaseLayout meta={meta}>
+	<AnnouncementBar />
+	<Header />
+	<main id="main-content">
+		<slot />
+	</main>
+	<Footer />
+</BaseLayout>

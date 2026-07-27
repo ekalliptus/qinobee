@@ -1,0 +1,29 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getDb } from "@lib/db/client";
+import { createResumeService } from "@modules/resume/services/resume-service";
+import ResumeEditor from "@modules/resume/components/ResumeEditor";
+import type { ResumeDocument } from "@modules/resume/types";
+
+export const prerender = false;
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/login?next=" + encodeURIComponent(Astro.url.pathname));
+}
+
+const service = createResumeService(getDb());
+let doc: ResumeDocument;
+try {
+  doc = await service.getOrThrow(user.id, Astro.params.id!);
+} catch {
+  return new Response("Not found", { status: 404 });
+}
+---
+
+<BaseLayout meta={{ title: `Edit — ${doc.title}`, noindex: true }}>
+  <main id="main-content" class="mx-auto w-full max-w-6xl px-4 py-6">
+    <h1 class="mb-4 text-2xl font-bold">{doc.title}</h1>
+    <ResumeEditor client:load initialDoc={doc} />
+  </main>
+</BaseLayout>

@@ -1,0 +1,46 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Badge from "@/components/ui/Badge.astro";
+import Alert from "@/components/ui/Alert.astro";
+import MetricCard from "@/components/ui/MetricCard.astro";
+---
+
+<Section>
+	<Container class="flex flex-col gap-8">
+		<div class="flex max-w-3xl flex-col gap-4">
+			<SectionLabel>ILLUSTRATIVE SCENARIO</SectionLabel>
+			<h2 class="font-[var(--font-heading)] text-3xl font-bold sm:text-4xl">
+				How a connected campus could look.
+			</h2>
+		</div>
+
+		<Alert tone="info" title="Illustrative scenario">
+			The story and numbers below are a fictional example to show how the platform
+			might be used. They do not describe a real institution or real results.
+		</Alert>
+
+		<div class="neo-card flex flex-col gap-6 lg:flex-row lg:items-center">
+			<div class="flex flex-1 flex-col gap-4">
+				<div class="flex items-center gap-3">
+					<span class="font-[var(--font-heading)] text-xl font-bold">
+						Meridian College
+					</span>
+					<Badge tone="muted">Fictional</Badge>
+				</div>
+				<p class="text-[var(--color-ink)]">
+					In this example, Meridian College moves its career, internship and
+					mentoring programmes onto one platform. Staff replace scattered
+					spreadsheets with shared records, students manage everything from a
+					single login, and leadership finally sees participation across the
+					whole institution in one view.
+				</p>
+			</div>
+			<div class="grid w-full gap-4 sm:grid-cols-2 lg:w-80">
+				<MetricCard value="+31%" label="Programme sign-ups" demo={true} />
+				<MetricCard value="9 hrs" label="Staff time saved weekly" demo={true} />
+			</div>
+		</div>
+	</Container>
+</Section>

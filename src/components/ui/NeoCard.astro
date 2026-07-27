@@ -1,0 +1,11 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props;
+
+const cls = ["neo-card", className].join(" ").trim();
+---
+
+<div class={cls}><slot /></div>

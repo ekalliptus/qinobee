@@ -1,0 +1,55 @@
+---
+import { siteConfig } from "@/config/site";
+import { buildMeta, type MetaInput } from "@/lib/seo";
+import "../styles/global.css";
+
+interface Props {
+	meta: MetaInput;
+}
+
+const { meta } = Astro.props;
+const siteUrl = Astro.site?.href ?? import.meta.env.PUBLIC_SITE_URL;
+const m = buildMeta(meta, siteUrl);
+---
+
+<!doctype html>
+<html lang={siteConfig.defaultLocale}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{m.title}</title>
+		<meta name="description" content={m.description} />
+		<meta name="robots" content={m.robots} />
+		{m.canonical && <link rel="canonical" href={m.canonical} />}
+		<meta property="og:type" content={m.type} />
+		<meta property="og:site_name" content={siteConfig.name} />
+		<meta property="og:title" content={m.title} />
+		<meta property="og:description" content={m.description} />
+		<meta property="og:image" content={m.ogImage} />
+		{m.canonical && <meta property="og:url" content={m.canonical} />}
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={m.title} />
+		<meta name="twitter:description" content={m.description} />
+		<meta name="twitter:image" content={m.ogImage} />
+	</head>
+	<body>
+		<a href="#main-content" class="skip-link">Skip to content</a>
+		<slot />
+		<style is:global>
+			.skip-link {
+				position: absolute;
+				left: -9999px;
+				top: 0;
+				z-index: 100;
+				padding: 0.5rem 1rem;
+				background: var(--color-bg, #fff);
+				color: var(--color-fg, #000);
+			}
+			.skip-link:focus {
+				left: 0;
+			}
+		</style>
+	</body>
+</html>

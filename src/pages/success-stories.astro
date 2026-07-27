@@ -1,0 +1,97 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Breadcrumb from "@/components/ui/Breadcrumb.astro";
+import Alert from "@/components/ui/Alert.astro";
+import Button from "@/components/ui/Button.astro";
+
+const stories = [
+  {
+    institution: "Northgate Regional College",
+    tag: "Career Management",
+    tone: "bg-[var(--color-blue)]",
+    summary:
+      "A career team drowning in spreadsheets moves job listings, applications and placements into one connected view.",
+    outcome:
+      "Coordinators reclaim hours each week and leadership reads placement outcomes across the whole programme at a glance.",
+  },
+  {
+    institution: "Ashfield University",
+    tag: "Mentoring Management",
+    tone: "bg-[var(--color-pink)]",
+    summary:
+      "A mentoring programme that stalled by mid-term gains a simple view of which pairs are active and which have gone quiet.",
+    outcome:
+      "Early nudges keep more relationships alive, and the second-conversation rate becomes something the team can protect.",
+  },
+  {
+    institution: "Meridian Institute",
+    tag: "Scholarship Management",
+    tone: "bg-[var(--color-yellow)]",
+    summary:
+      "A stressful review season is reshaped around shared criteria, deliberate reviewer assignment and recorded decisions.",
+    outcome:
+      "Applicants receive fair, consistent answers and reviewers work from the same foundation throughout the season.",
+  },
+];
+---
+
+<MarketingLayout
+  meta={{
+    title: "Success Stories",
+    description:
+      "Illustrative scenarios showing how connected records reshape career, mentoring and scholarship programmes.",
+    canonical: "/success-stories",
+  }}
+>
+  <Section>
+    <Container class="flex flex-col gap-10">
+      <Breadcrumb
+        items={[{ name: "Home", href: "/" }, { name: "Success Stories" }]}
+      />
+      <div class="flex max-w-3xl flex-col gap-4">
+        <SectionLabel>SUCCESS STORIES</SectionLabel>
+        <h1 class="font-[var(--font-heading)] text-4xl font-bold sm:text-5xl">
+          What a connected platform makes possible.
+        </h1>
+      </div>
+
+      <Alert tone="warning" title="Illustrative scenarios">
+        The institutions and outcomes below are fictional. They illustrate how
+        Qinobee is designed to work and do not represent real customers.
+      </Alert>
+
+      <div class="grid gap-5 lg:grid-cols-3">
+        {
+          stories.map((s) => (
+            <article class="neo-card flex h-full flex-col gap-4">
+              <span
+                class={`inline-flex w-fit items-center border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] px-2 py-0.5 text-xs font-semibold ${s.tone}`}
+              >
+                {s.tag}
+              </span>
+              <h2 class="font-[var(--font-heading)] text-xl font-bold">
+                {s.institution}
+              </h2>
+              <p class="text-[var(--color-ink)]">{s.summary}</p>
+              <p class="mt-auto border-t-2 border-[var(--color-ink)] pt-4 font-medium">
+                {s.outcome}
+              </p>
+            </article>
+          ))
+        }
+      </div>
+
+      <div class="flex flex-wrap gap-4">
+        <Button href="/request-demo" variant="primary" size="lg"
+          >Request a demo</Button
+        >
+        <Button href="/resources" variant="secondary" size="lg"
+          >Read the resources</Button
+        >
+      </div>
+    </Container>
+  </Section>
+</MarketingLayout>

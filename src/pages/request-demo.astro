@@ -1,0 +1,378 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import NeoCard from "@/components/ui/NeoCard.astro";
+import Button from "@/components/ui/Button.astro";
+import Alert from "@/components/ui/Alert.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import { getDb } from "@/lib/db/client";
+import { DemoService } from "@/lib/services/demo-service";
+import { demoSchema, SOLUTIONS } from "@/lib/services/demo-schema";
+import { rateLimit } from "@/lib/rate-limit";
+import { contactPageLd } from "@/lib/seo";
+
+const SIZES = ["1-100", "100-1000", "1000-5000", "5000-20000", "20000+"];
+const CONTACTS = ["email", "phone", "either"] as const;
+
+type State = "idle" | "invalid" | "success" | "error";
+let state: State = "idle";
+let fieldErrors: Record<string, string> = {};
+let formError = "";
+
+// Sticky values (preserved on validation error).
+const v = {
+  fullName: "",
+  workEmail: "",
+  institution: "",
+  jobTitle: "",
+  country: "",
+  institutionSize: "",
+  solutions: [] as string[],
+  challenge: "",
+  preferredContact: "email" as string,
+  consent: false,
+};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const ip = Astro.clientAddress || "unknown";
+  const limit = rateLimit(getDb(), `demo:${ip}`, 5, 600);
+
+  const honey = String(form.get("company_website") ?? "");
+
+  v.fullName = String(form.get("fullName") ?? "");
+  v.workEmail = String(form.get("workEmail") ?? "");
+  v.institution = String(form.get("institution") ?? "");
+  v.jobTitle = String(form.get("jobTitle") ?? "");
+  v.country = String(form.get("country") ?? "");
+  v.institutionSize = String(form.get("institutionSize") ?? "");
+  v.solutions = form.getAll("solutions").map(String);
+  v.challenge = String(form.get("challenge") ?? "");
+  v.preferredContact = String(form.get("preferredContact") ?? "email");
+  v.consent = form.get("consent") != null;
+
+  if (!limit.allowed) {
+    state = "error";
+    formError = "Too many requests. Please try again in a few minutes.";
+  } else if (honey.trim() !== "") {
+    // Honeypot tripped: submit (service drops it) and show success to the bot.
+    await new DemoService(getDb()).submit({ company_website: honey } as any);
+    state = "success";
+  } else {
+    const input = {
+      fullName: v.fullName,
+      workEmail: v.workEmail,
+      institution: v.institution,
+      jobTitle: v.jobTitle,
+      country: v.country,
+      institutionSize: v.institutionSize,
+      solutions: v.solutions,
+      challenge: v.challenge,
+      preferredContact: v.preferredContact,
+      consent: v.consent ? true : v.consent,
+    };
+    const parsed = demoSchema.safeParse(input);
+    if (!parsed.success) {
+      state = "invalid";
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? "");
+        if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+      }
+    } else {
+      const res = await new DemoService(getDb()).submit(input);
+      if (res.ok) {
+        state = "success";
+      } else {
+        state = "invalid";
+        formError = "Please check the form and try again.";
+      }
+    }
+  }
+}
+
+const inputCls =
+  "border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] px-3 py-2 w-full bg-[var(--color-white)]";
+const errCls = "text-sm text-[var(--color-red)] font-medium";
+
+const siteUrl = Astro.site?.href ?? import.meta.env.PUBLIC_SITE_URL;
+const contactJsonLd = contactPageLd("/request-demo", siteUrl);
+---
+
+<MarketingLayout
+  meta={{
+    title: "Request a demo",
+    description: "See how Qinobee unifies student success and career development for your institution.",
+  }}
+>
+  <Section>
+    <Container>
+      <div class="grid gap-12 lg:grid-cols-2">
+        <!-- LEFT: benefits + how implementation works -->
+        <div>
+          <SectionLabel>Request a demo</SectionLabel>
+          <h1 class="mt-3 text-3xl font-bold text-[var(--color-ink)] sm:text-4xl">
+            See Qinobee in action
+          </h1>
+          <p class="mt-4 text-[var(--color-ink)]/80">
+            A guided walkthrough tailored to your institution. We will map your
+            current workflows to Qinobee and show the fastest path to value.
+          </p>
+
+          <h2 class="mt-8 text-lg font-bold text-[var(--color-ink)]">What you get</h2>
+          <ul class="mt-3 flex flex-col gap-2 text-[var(--color-ink)]/80">
+            <li>• A live tour of the modules relevant to your goals</li>
+            <li>• Answers on data privacy, security, and integrations</li>
+            <li>• A rollout estimate for your team size</li>
+          </ul>
+
+          <h2 class="mt-8 text-lg font-bold text-[var(--color-ink)]">How implementation works</h2>
+          <ol class="mt-3 flex flex-col gap-2 text-[var(--color-ink)]/80">
+            <li><strong>1. Discovery</strong> — we review your needs and current tools.</li>
+            <li><strong>2. Configuration</strong> — we tailor modules and branding.</li>
+            <li><strong>3. Onboarding</strong> — we import data and train your staff.</li>
+            <li><strong>4. Launch</strong> — you go live with ongoing support.</li>
+          </ol>
+        </div>
+
+        <!-- RIGHT: form -->
+        <div>
+          <NeoCard>
+            {
+              state === "success" ? (
+                <Alert tone="success" title="Request received">
+                  Thank you. Our team will reach out within one business day.
+                  Barakallahu fiikum.
+                </Alert>
+              ) : (
+                <>
+                  {state === "error" && (
+                    <div class="mb-4">
+                      <Alert tone="danger">{formError}</Alert>
+                    </div>
+                  )}
+                  {state === "invalid" && (
+                    <div class="mb-4">
+                      <Alert tone="danger">
+                        {formError || "Please fix the highlighted fields below."}
+                      </Alert>
+                    </div>
+                  )}
+                  <form method="POST" class="flex flex-col gap-4" novalidate>
+                    {/* Honeypot: off-screen, hidden from AT and tab order. */}
+                    <div
+                      aria-hidden="true"
+                      style="position:absolute;left:-9999px;top:-9999px;height:0;width:0;overflow:hidden;"
+                    >
+                      <label for="company_website">Company website</label>
+                      <input
+                        id="company_website"
+                        name="company_website"
+                        type="text"
+                        tabindex="-1"
+                        autocomplete="off"
+                      />
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                      <label for="fullName" class="font-medium">Full name</label>
+                      <input
+                        id="fullName"
+                        name="fullName"
+                        type="text"
+                        required
+                        value={v.fullName}
+                        class={inputCls}
+                        aria-invalid={fieldErrors.fullName ? "true" : undefined}
+                        aria-describedby={fieldErrors.fullName ? "fullName-err" : undefined}
+                      />
+                      {fieldErrors.fullName && (
+                        <p id="fullName-err" class={errCls}>{fieldErrors.fullName}</p>
+                      )}
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                      <label for="workEmail" class="font-medium">Work email</label>
+                      <input
+                        id="workEmail"
+                        name="workEmail"
+                        type="email"
+                        required
+                        value={v.workEmail}
+                        class={inputCls}
+                        aria-invalid={fieldErrors.workEmail ? "true" : undefined}
+                        aria-describedby={fieldErrors.workEmail ? "workEmail-err" : undefined}
+                      />
+                      {fieldErrors.workEmail && (
+                        <p id="workEmail-err" class={errCls}>{fieldErrors.workEmail}</p>
+                      )}
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                      <label for="institution" class="font-medium">Institution</label>
+                      <input
+                        id="institution"
+                        name="institution"
+                        type="text"
+                        required
+                        value={v.institution}
+                        class={inputCls}
+                        aria-invalid={fieldErrors.institution ? "true" : undefined}
+                        aria-describedby={fieldErrors.institution ? "institution-err" : undefined}
+                      />
+                      {fieldErrors.institution && (
+                        <p id="institution-err" class={errCls}>{fieldErrors.institution}</p>
+                      )}
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                      <label for="jobTitle" class="font-medium">Job title</label>
+                      <input
+                        id="jobTitle"
+                        name="jobTitle"
+                        type="text"
+                        required
+                        value={v.jobTitle}
+                        class={inputCls}
+                        aria-invalid={fieldErrors.jobTitle ? "true" : undefined}
+                        aria-describedby={fieldErrors.jobTitle ? "jobTitle-err" : undefined}
+                      />
+                      {fieldErrors.jobTitle && (
+                        <p id="jobTitle-err" class={errCls}>{fieldErrors.jobTitle}</p>
+                      )}
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                      <label for="country" class="font-medium">Country</label>
+                      <input
+                        id="country"
+                        name="country"
+                        type="text"
+                        required
+                        value={v.country}
+                        class={inputCls}
+                        aria-invalid={fieldErrors.country ? "true" : undefined}
+                        aria-describedby={fieldErrors.country ? "country-err" : undefined}
+                      />
+                      {fieldErrors.country && (
+                        <p id="country-err" class={errCls}>{fieldErrors.country}</p>
+                      )}
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                      <label for="institutionSize" class="font-medium">Institution size</label>
+                      <select
+                        id="institutionSize"
+                        name="institutionSize"
+                        required
+                        class={inputCls}
+                        aria-invalid={fieldErrors.institutionSize ? "true" : undefined}
+                        aria-describedby={
+                          fieldErrors.institutionSize ? "institutionSize-err" : undefined
+                        }
+                      >
+                        <option value="">Select size…</option>
+                        {SIZES.map((s) => (
+                          <option value={s} selected={v.institutionSize === s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                      {fieldErrors.institutionSize && (
+                        <p id="institutionSize-err" class={errCls}>
+                          {fieldErrors.institutionSize}
+                        </p>
+                      )}
+                    </div>
+
+                    <fieldset
+                      class="flex flex-col gap-2"
+                      aria-describedby={fieldErrors.solutions ? "solutions-err" : undefined}
+                    >
+                      <legend class="font-medium">Solutions of interest</legend>
+                      {SOLUTIONS.map((s) => (
+                        <label class="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            name="solutions"
+                            value={s}
+                            checked={v.solutions.includes(s)}
+                          />
+                          <span>{s}</span>
+                        </label>
+                      ))}
+                      {fieldErrors.solutions && (
+                        <p id="solutions-err" class={errCls}>
+                          Please select at least one.
+                        </p>
+                      )}
+                    </fieldset>
+
+                    <div class="flex flex-col gap-1">
+                      <label for="challenge" class="font-medium">Current challenge</label>
+                      <textarea
+                        id="challenge"
+                        name="challenge"
+                        rows="4"
+                        class={inputCls}
+                        aria-invalid={fieldErrors.challenge ? "true" : undefined}
+                        aria-describedby={fieldErrors.challenge ? "challenge-err" : undefined}
+                      >{v.challenge}</textarea>
+                      {fieldErrors.challenge && (
+                        <p id="challenge-err" class={errCls}>{fieldErrors.challenge}</p>
+                      )}
+                    </div>
+
+                    <fieldset class="flex flex-col gap-2">
+                      <legend class="font-medium">Preferred contact</legend>
+                      {CONTACTS.map((c) => (
+                        <label class="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="preferredContact"
+                            value={c}
+                            checked={v.preferredContact === c}
+                          />
+                          <span class="capitalize">{c}</span>
+                        </label>
+                      ))}
+                    </fieldset>
+
+                    <div class="flex flex-col gap-1">
+                      <label class="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="consent"
+                          value="yes"
+                          checked={v.consent}
+                          required
+                          aria-invalid={fieldErrors.consent ? "true" : undefined}
+                          aria-describedby={fieldErrors.consent ? "consent-err" : undefined}
+                        />
+                        <span>
+                          I consent to Qinobee contacting me about this request and
+                          storing my details for that purpose.
+                        </span>
+                      </label>
+                      {fieldErrors.consent && (
+                        <p id="consent-err" class={errCls}>You must consent to continue.</p>
+                      )}
+                    </div>
+
+                    <Button type="submit" variant="primary">Request demo</Button>
+                  </form>
+                </>
+              )
+            }
+          </NeoCard>
+        </div>
+      </div>
+    </Container>
+  </Section>
+
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(contactJsonLd)}
+    is:inline
+  />
+</MarketingLayout>

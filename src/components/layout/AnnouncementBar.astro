@@ -1,0 +1,49 @@
+---
+// Dismissible announcement bar. Uses an inline script (not an island).
+// Persists dismissal for the session via sessionStorage.
+const storageKey = "qb-announce-dismissed";
+---
+
+<div
+	id="announcement-bar"
+	class="border-b-2 border-[var(--color-ink)] bg-[var(--color-yellow)] text-[var(--color-ink)]"
+	data-storage-key={storageKey}
+>
+	<div class="max-w-6xl mx-auto px-4 sm:px-6">
+		<div class="flex items-center justify-center gap-3 py-2 text-sm font-semibold">
+			<p class="text-center">
+				New: explore the full platform.
+				<a href="/features" class="underline underline-offset-2 hover:opacity-80">
+					See features
+				</a>
+			</p>
+			<button
+				type="button"
+				id="announcement-dismiss"
+				aria-label="Dismiss announcement"
+				class="ml-auto inline-flex h-11 w-11 shrink-0 items-center justify-center border-2 border-[var(--color-ink)] bg-[var(--color-white)] leading-none hover:bg-[var(--color-paper)]"
+			>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+					<path
+						d="M6 6l12 12M18 6L6 18"
+						stroke="currentColor"
+						stroke-width="2.5"
+						stroke-linecap="round"></path>
+				</svg>
+			</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	const bar = document.getElementById("announcement-bar");
+	const key = bar?.dataset.storageKey ?? "qb-announce-dismissed";
+	if (bar && sessionStorage.getItem(key) === "1") {
+		bar.remove();
+	} else {
+		document.getElementById("announcement-dismiss")?.addEventListener("click", () => {
+			sessionStorage.setItem(key, "1");
+			bar?.remove();
+		});
+	}
+</script>

@@ -1,0 +1,54 @@
+---
+import { buttonClasses } from "./button-classes";
+import type { ButtonVariant, ButtonSize } from "./button-classes";
+
+interface Props {
+  label: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  href?: string;
+  type?: "button" | "submit";
+  disabled?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  label,
+  variant = "secondary",
+  size = "md",
+  href,
+  type = "button",
+  disabled = false,
+  class: className = "",
+  ...rest
+} = Astro.props;
+
+const cls = [buttonClasses(variant, size), "!px-0 aspect-square", className]
+  .join(" ")
+  .trim();
+---
+
+{
+  href ? (
+    <a
+      href={disabled ? undefined : href}
+      class={cls}
+      aria-label={label}
+      aria-disabled={disabled ? "true" : undefined}
+      {...rest}
+    >
+      <slot />
+    </a>
+  ) : (
+    <button
+      type={type}
+      class={cls}
+      disabled={disabled}
+      aria-label={label}
+      {...rest}
+    >
+      <slot />
+    </button>
+  )
+}

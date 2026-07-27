@@ -1,0 +1,119 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Breadcrumb from "@/components/ui/Breadcrumb.astro";
+import Button from "@/components/ui/Button.astro";
+import { solutions } from "@/data/solutions";
+import { breadcrumbLd } from "@/lib/seo";
+import {
+  Briefcase,
+  ClipboardList,
+  Users,
+  CalendarHeart,
+  Award,
+  Globe,
+  FileText,
+  BarChart3,
+  ArrowRight,
+} from "lucide-react";
+
+const ICONS: Record<string, typeof Briefcase> = {
+  Briefcase,
+  ClipboardList,
+  Users,
+  CalendarHeart,
+  Award,
+  Globe,
+  FileText,
+  BarChart3,
+};
+
+const COLOR: Record<string, string> = {
+  blue: "bg-[var(--color-blue)]",
+  green: "bg-[var(--color-green)]",
+  pink: "bg-[var(--color-pink)]",
+  purple: "bg-[var(--color-purple)]",
+  orange: "bg-[var(--color-orange)]",
+  yellow: "bg-[var(--color-yellow)]",
+};
+
+const siteUrl = Astro.site?.href ?? import.meta.env.PUBLIC_SITE_URL;
+const base = (siteUrl ?? "http://localhost:4321").replace(/\/+$/, "");
+const jsonLd = breadcrumbLd([
+  { name: "Home", url: `${base}/` },
+  { name: "Solutions", url: `${base}/solutions` },
+]);
+---
+
+<MarketingLayout
+  meta={{
+    title: "Solutions",
+    description:
+      "Explore the connected modules that make up the Qinobee student success and career development platform.",
+    canonical: "/solutions",
+  }}
+>
+  <Section>
+    <Container class="flex flex-col gap-10">
+      <Breadcrumb
+        items={[{ name: "Home", href: "/" }, { name: "Solutions" }]}
+      />
+      <div class="flex max-w-3xl flex-col gap-4">
+        <SectionLabel>SOLUTIONS</SectionLabel>
+        <h1 class="font-[var(--font-heading)] text-4xl font-bold sm:text-5xl">
+          Everything a student success team needs, connected.
+        </h1>
+        <p class="text-lg text-[var(--color-ink)]">
+          Each solution stands on its own and shares the same data, so your
+          teams stop re-entering information and start seeing the whole
+          picture.
+        </p>
+      </div>
+
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          solutions.map((solution) => {
+            const Icon = ICONS[solution.icon] ?? Briefcase;
+            return (
+              <a
+                href={solution.href}
+                class="neo-card group flex h-full flex-col gap-4 no-underline"
+              >
+                <span
+                  class={`flex h-12 w-12 items-center justify-center rounded-[var(--radius)] border-2 border-[var(--color-ink)] ${COLOR[solution.color]}`}
+                >
+                  <Icon size={24} strokeWidth={2.5} aria-hidden="true" />
+                </span>
+                <h2 class="font-[var(--font-heading)] text-xl font-bold">
+                  {solution.title}
+                </h2>
+                <p class="text-[var(--color-ink)]">{solution.description}</p>
+                <span class="mt-auto inline-flex items-center gap-1 font-semibold underline">
+                  Learn more
+                  <ArrowRight size={16} aria-hidden="true" />
+                </span>
+              </a>
+            );
+          })
+        }
+      </div>
+
+      <div class="flex flex-wrap gap-4">
+        <Button href="/request-demo" variant="primary" size="lg"
+          >Request a demo</Button
+        >
+        <Button href="/features" variant="secondary" size="lg"
+          >See the platform</Button
+        >
+      </div>
+    </Container>
+  </Section>
+
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(jsonLd)}
+    is:inline
+  />
+</MarketingLayout>

@@ -1,0 +1,78 @@
+---
+import { getDb } from "@lib/db/client";
+import { createResumeService } from "@modules/resume/services/resume-service";
+import { getTemplate } from "@modules/resume/templates/registry";
+import { fullName } from "@modules/resume/templates/name";
+import { safeResumeFilename } from "@lib/utils/filename";
+import type { ResumeDocument } from "@modules/resume/types";
+import "@/styles/global.css";
+import "@/styles/print.css";
+
+export const prerender = false;
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/login?next=" + encodeURIComponent(Astro.url.pathname));
+}
+
+const service = createResumeService(getDb());
+let doc: ResumeDocument;
+try {
+  doc = await service.getOrThrow(user.id, Astro.params.id!);
+} catch {
+  // Same 404 for missing and unowned: no enumeration.
+  return new Response("Not found", { status: 404 });
+}
+
+const Template = getTemplate(doc.templateId).component;
+const candidate = fullName(doc.personalInformation);
+// Browser Save-as-PDF uses <title> as the default filename.
+const filenameBase = safeResumeFilename(candidate, doc.title).replace(
+  /\.pdf$/,
+  "",
+);
+const autoPrint = Astro.url.searchParams.get("print") === "1";
+---
+
+<!doctype html>
+<html lang={doc.language}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{filenameBase}</title>
+    <meta name="author" content={candidate} />
+    <meta name="robots" content="noindex,nofollow" />
+  </head>
+  <body>
+    <div class="no-print" role="toolbar" aria-label="Export">
+      <button type="button" id="print-btn">Print / Save PDF</button>
+    </div>
+    <div class="resume-page">
+      <Template resume={doc} mode="print" />
+    </div>
+    <script is:inline define:vars={{ autoPrint }}>
+      const btn = document.getElementById("print-btn");
+      if (btn) btn.addEventListener("click", () => window.print());
+      if (autoPrint) window.addEventListener("load", () => window.print());
+    </script>
+    <style is:global>
+      body {
+        margin: 0;
+        background: var(--color-paper, #fffdf4);
+      }
+      .no-print {
+        padding: 12px;
+        display: flex;
+        justify-content: center;
+      }
+      #print-btn {
+        min-height: 44px;
+        padding: 0 16px;
+        font-weight: 600;
+        border: 2px solid var(--color-ink, #171717);
+        background: var(--color-white, #fff);
+        cursor: pointer;
+      }
+    </style>
+  </body>
+</html>

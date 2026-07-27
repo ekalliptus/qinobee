@@ -1,0 +1,66 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Badge from "@/components/ui/Badge.astro";
+import { ArrowRight } from "lucide-react";
+
+const resources = [
+	{
+		kind: "Guide",
+		tone: "blue" as const,
+		title: "Bringing student success programmes together",
+		body: "A practical look at moving from scattered tools to one connected platform.",
+	},
+	{
+		kind: "Case Study",
+		tone: "green" as const,
+		title: "A connected campus, end to end",
+		body: "An illustrative walkthrough of how the modules work as one system.",
+	},
+	{
+		kind: "Product Update",
+		tone: "yellow" as const,
+		title: "What's new in resume and career tools",
+		body: "Highlights from recent improvements to the student career experience.",
+	},
+];
+---
+
+<Section class="bg-[var(--color-muted)] border-y-2 border-[var(--color-ink)]">
+	<Container class="flex flex-col gap-10">
+		<div class="flex flex-wrap items-end justify-between gap-4">
+			<div class="flex max-w-2xl flex-col gap-4">
+				<SectionLabel>RESOURCES</SectionLabel>
+				<h2 class="font-[var(--font-heading)] text-3xl font-bold sm:text-4xl">
+					Ideas and updates for student success teams.
+				</h2>
+			</div>
+			<a href="/resources" class="inline-flex items-center gap-1 font-semibold underline">
+				View all resources
+				<ArrowRight size={16} aria-hidden="true" />
+			</a>
+		</div>
+
+		<div class="grid gap-5 md:grid-cols-3">
+			{
+				resources.map((resource) => (
+					<a
+						href="/resources"
+						class="neo-card flex h-full flex-col gap-3 no-underline"
+					>
+						<Badge tone={resource.tone}>{resource.kind}</Badge>
+						<h3 class="font-[var(--font-heading)] text-xl font-bold">
+							{resource.title}
+						</h3>
+						<p class="text-[var(--color-ink)]">{resource.body}</p>
+						<span class="mt-auto inline-flex items-center gap-1 font-semibold underline">
+							Read more
+							<ArrowRight size={16} aria-hidden="true" />
+						</span>
+					</a>
+				))
+			}
+		</div>
+	</Container>
+</Section>

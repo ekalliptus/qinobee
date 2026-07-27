@@ -1,0 +1,84 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import Button from "@/components/ui/Button.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Badge from "@/components/ui/Badge.astro";
+import MetricCard from "@/components/ui/MetricCard.astro";
+import ScoreRing from "@/components/ui/ScoreRing.astro";
+import { siteConfig } from "@/config/site";
+---
+
+<Section class="relative overflow-hidden dot-grid">
+	<Container class="grid gap-12 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+		<div class="flex flex-col gap-6">
+			<SectionLabel>THE STUDENT SUCCESS OPERATING SYSTEM</SectionLabel>
+			<h1
+				class="font-[var(--font-heading)] text-4xl font-extrabold leading-[1.1] sm:text-5xl lg:text-6xl"
+			>
+				One platform to run every student success programme.
+			</h1>
+			<p class="max-w-xl text-lg text-[var(--color-ink)]">
+				Connect career services, internships, mentoring, student activities,
+				resume development and institutional reporting without adding another
+				fragmented system.
+			</p>
+			<div class="flex flex-wrap gap-4">
+				<Button variant="primary" size="lg" href={siteConfig.demoUrl}>
+					Request Demo
+				</Button>
+				<Button variant="secondary" size="lg" href="/solutions">
+					Explore Solutions
+				</Button>
+			</div>
+		</div>
+
+		<div class="relative" aria-label="Illustrative product dashboard">
+			<div
+				class="absolute -top-3 left-3 z-20 rotate-[-4deg]"
+			>
+				<Badge tone="yellow">Illustrative data</Badge>
+			</div>
+
+			<div class="grid grid-cols-2 gap-4">
+				<MetricCard value="4,280" label="Active students" demo={true} />
+				<MetricCard value="82%" label="Internship completion" demo={true} />
+
+				<div class="neo-card col-span-2 flex items-center gap-4">
+					<ScoreRing score={78} size={84} label="Average resume score 78 of 100" />
+					<div class="flex flex-col gap-1">
+						<span class="text-sm font-medium">Average resume score</span>
+						<span class="font-[var(--font-heading)] text-2xl font-bold">78</span>
+						<Badge tone="muted">Illustrative</Badge>
+					</div>
+				</div>
+
+				<MetricCard value="1,240" label="Applications" demo={true} />
+				<MetricCard value="68" label="Mentor sessions" demo={true} />
+
+				<div
+					class="neo-card col-span-2 flex items-center justify-between gap-3 bg-[var(--color-green)]"
+				>
+					<div class="flex flex-col">
+						<span class="text-sm font-semibold">New mentor session booked</span>
+						<span class="text-xs">Career profile review · 3:00 PM</span>
+					</div>
+					<span
+						class="rotate-[6deg] border-2 border-[var(--color-ink)] bg-[var(--color-white)] px-2 py-1 text-xs font-bold shadow-[var(--shadow-sm)]"
+						>Live</span
+					>
+				</div>
+			</div>
+		</div>
+	</Container>
+</Section>
+
+<style>
+	.dot-grid {
+		background-image: radial-gradient(
+			var(--color-muted) 1.5px,
+			transparent 1.5px
+		);
+		background-size: 22px 22px;
+	}
+</style>

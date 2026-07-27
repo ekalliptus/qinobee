@@ -1,0 +1,67 @@
+---
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+
+const items = [
+	{
+		title: "Configurable forms",
+		body: "Build the exact application and sign-up forms each programme needs.",
+	},
+	{
+		title: "Workflow builder",
+		body: "Shape approval steps and routing to match how your teams already work.",
+	},
+	{
+		title: "Role-based access",
+		body: "Decide precisely what each role can see and do across the platform.",
+	},
+	{
+		title: "White-label portal",
+		body: "Present the experience under your own name, colours and logo.",
+	},
+	{
+		title: "SSO readiness",
+		body: "Prepared to work with single sign-on so students use familiar logins.",
+	},
+	{
+		title: "API readiness",
+		body: "Built with programmatic access in mind for connected workflows.",
+	},
+	{
+		title: "Custom modules",
+		body: "Extend the platform to cover programmes that are unique to you.",
+	},
+	{
+		title: "Data import & export",
+		body: "Bring in existing records and take your data out whenever you need.",
+	},
+	{
+		title: "Integration readiness",
+		body: "Designed to sit alongside your current campus systems.",
+	},
+];
+---
+
+<Section>
+	<Container class="flex flex-col gap-10">
+		<div class="flex max-w-3xl flex-col gap-4">
+			<SectionLabel>MADE TO FIT</SectionLabel>
+			<h2 class="font-[var(--font-heading)] text-3xl font-bold sm:text-4xl">
+				Configure the platform around your institution.
+			</h2>
+		</div>
+		<ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			{
+				items.map((item) => (
+					<li class="neo-card flex h-full flex-col gap-2">
+						<h3 class="font-[var(--font-heading)] text-lg font-bold">
+							{item.title}
+						</h3>
+						<p class="text-sm text-[var(--color-ink)]">{item.body}</p>
+					</li>
+				))
+			}
+		</ul>
+	</Container>
+</Section>

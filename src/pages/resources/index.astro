@@ -1,0 +1,69 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import SectionLabel from "@/components/ui/SectionLabel.astro";
+import Breadcrumb from "@/components/ui/Breadcrumb.astro";
+import Alert from "@/components/ui/Alert.astro";
+import ResourceCard from "@/components/ui/ResourceCard.astro";
+import { getPublishedResources } from "@/lib/content";
+
+const resources = await getPublishedResources();
+
+const filters = [
+  { label: "All", href: "/resources" },
+  { label: "Blog", href: "/resources/blog" },
+  { label: "Guides", href: "/resources/guides" },
+  { label: "Updates", href: "/resources/updates" },
+];
+---
+
+<MarketingLayout
+  meta={{
+    title: "Resources",
+    description:
+      "Guides, articles and product updates on running connected student success and career programmes.",
+    canonical: "/resources",
+  }}
+>
+  <Section>
+    <Container class="flex flex-col gap-10">
+      <Breadcrumb
+        items={[{ name: "Home", href: "/" }, { name: "Resources" }]}
+      />
+      <div class="flex max-w-3xl flex-col gap-4">
+        <SectionLabel>RESOURCES</SectionLabel>
+        <h1 class="font-[var(--font-heading)] text-4xl font-bold sm:text-5xl">
+          Ideas and updates for student success teams.
+        </h1>
+      </div>
+
+      <nav aria-label="Filter resources" class="flex flex-wrap gap-3">
+        {
+          filters.map((f) => (
+            <a
+              href={f.href}
+              class="border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] bg-[var(--color-white)] px-3 py-1.5 text-sm font-semibold no-underline hover:bg-[var(--color-muted)]"
+            >
+              {f.label}
+            </a>
+          ))
+        }
+      </nav>
+
+      {
+        resources.length === 0 ? (
+          <Alert tone="info" title="Nothing here yet">
+            There are no resources published right now. Please check back soon.
+          </Alert>
+        ) : (
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {resources.map((entry) => (
+              <ResourceCard entry={entry} />
+            ))}
+          </div>
+        )
+      }
+    </Container>
+  </Section>
+</MarketingLayout>

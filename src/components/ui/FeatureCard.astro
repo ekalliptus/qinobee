@@ -1,0 +1,16 @@
+---
+interface Props {
+  title: string;
+  class?: string;
+}
+
+const { title, class: className = "" } = Astro.props;
+
+const cls = ["neo-card flex flex-col gap-3", className].join(" ").trim();
+---
+
+<div class={cls}>
+  <slot name="icon" />
+  <h3 class="text-lg font-semibold">{title}</h3>
+  <div class="text-[var(--color-ink)]"><slot /></div>
+</div>

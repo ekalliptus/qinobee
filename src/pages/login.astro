@@ -1,0 +1,93 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Section from "@/components/ui/Section.astro";
+import Container from "@/components/ui/Container.astro";
+import NeoCard from "@/components/ui/NeoCard.astro";
+import Button from "@/components/ui/Button.astro";
+import Alert from "@/components/ui/Alert.astro";
+import { getDb } from "@/lib/db/client";
+import { AuthService } from "@/lib/auth/service";
+import { rateLimit } from "@/lib/rate-limit";
+import { SESSION_COOKIE, cookieOptions } from "@/lib/auth/cookies";
+import { safeNext } from "@/lib/auth/middleware";
+
+let error = "";
+let emailValue = "";
+const next = safeNext(Astro.url.searchParams.get("next")) ?? "/app/dashboard";
+
+if (Astro.locals.user) return Astro.redirect(next);
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  emailValue = String(form.get("email") ?? "");
+  const password = String(form.get("password") ?? "");
+
+  const ip = Astro.clientAddress || "unknown";
+  const limit = rateLimit(getDb(), `login:${ip}`, 10, 600);
+
+  if (!limit.allowed) {
+    error = "Too many attempts. Please try again later.";
+  } else {
+    const auth = new AuthService(getDb());
+    try {
+      const sess = await auth.login(emailValue, password);
+      Astro.cookies.set(
+        SESSION_COOKIE,
+        sess.token,
+        cookieOptions(import.meta.env.PROD),
+      );
+      return Astro.redirect(next);
+    } catch {
+      error = "Invalid email or password.";
+    }
+  }
+}
+---
+
+<MarketingLayout meta={{ title: "Sign in", noindex: true }}>
+  <Section>
+    <Container>
+      <div class="mx-auto max-w-md">
+        <NeoCard>
+          <h1 class="text-2xl font-bold text-[var(--color-ink)]">Sign in</h1>
+          {
+            error && (
+              <div class="mt-4">
+                <Alert tone="danger">{error}</Alert>
+              </div>
+            )
+          }
+          <form method="POST" class="mt-6 flex flex-col gap-4">
+            <div class="flex flex-col gap-1">
+              <label for="email" class="font-medium">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                autocomplete="email"
+                value={emailValue}
+                class="border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] px-3 py-2"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="password" class="font-medium">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                autocomplete="current-password"
+                class="border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] px-3 py-2"
+              />
+            </div>
+            <Button type="submit" variant="primary">Sign in</Button>
+          </form>
+          <p class="mt-4 text-sm">
+            No account? <a href="/register" class="underline">Create one</a>.
+          </p>
+        </NeoCard>
+      </div>
+    </Container>
+  </Section>
+</MarketingLayout>
