@@ -42,6 +42,7 @@ export interface ResumeEditorStore {
   update: (patch: ResumePatch) => void;
   undo: () => void;
   redo: () => void;
+  saveNow: () => void;
   canUndo: boolean;
   canRedo: boolean;
 }
@@ -132,6 +133,11 @@ export function useResumeEditorStore(
     scheduleSave();
   }, [history, scheduleSave]);
 
+  const saveNow = useCallback(() => {
+    clearTimer();
+    void runSave();
+  }, [clearTimer, runSave]);
+
   useEffect(() => clearTimer, [clearTimer]);
 
   return {
@@ -140,6 +146,7 @@ export function useResumeEditorStore(
     update,
     undo,
     redo,
+    saveNow,
     canUndo: history.canUndo,
     canRedo: history.canRedo,
   };
