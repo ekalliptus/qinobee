@@ -15,7 +15,14 @@ export default defineConfig({
     mode: 'standalone',
   }),
 
-  integrations: [react(), sitemap()],
+  integrations: [
+    react(),
+    sitemap({
+      // Keep personal/app/API + shared-resume routes out of the sitemap.
+      filter: (page) =>
+        !/\/(app|api)(\/|$)/.test(page) && !page.includes('/resume/shared'),
+    }),
+  ],
 
   vite: {
     plugins: [tailwindcss()],

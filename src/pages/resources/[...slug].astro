@@ -4,6 +4,7 @@ import ContentLayout from "@/layouts/ContentLayout.astro";
 import Badge from "@/components/ui/Badge.astro";
 import Breadcrumb from "@/components/ui/Breadcrumb.astro";
 import { getPublishedResources, TYPE_LABEL, TYPE_TONE } from "@/lib/content";
+import { articleLd } from "@/lib/seo";
 
 export const prerender = true;
 
@@ -24,6 +25,20 @@ const dateLabel = data.publishedAt.toLocaleDateString("en-GB", {
   month: "short",
   day: "numeric",
 });
+
+const siteUrl = Astro.site?.href ?? import.meta.env.PUBLIC_SITE_URL;
+const articleJsonLd = articleLd(
+  {
+    title: data.title,
+    description: data.description,
+    publishedAt: data.publishedAt,
+    updatedAt: data.updatedAt,
+    author: data.author,
+    url: `/resources/${entry.id}`,
+    image: data.cover,
+  },
+  siteUrl,
+);
 ---
 
 <ContentLayout
@@ -57,4 +72,10 @@ const dateLabel = data.publishedAt.toLocaleDateString("en-GB", {
   <hr />
 
   <Content />
+
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(articleJsonLd)}
+    is:inline
+  />
 </ContentLayout>

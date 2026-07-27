@@ -24,6 +24,7 @@ const m = buildMeta(meta, siteUrl);
 		<meta name="robots" content={m.robots} />
 		{m.canonical && <link rel="canonical" href={m.canonical} />}
 		<meta property="og:type" content={m.type} />
+		<meta property="og:site_name" content={siteConfig.name} />
 		<meta property="og:title" content={m.title} />
 		<meta property="og:description" content={m.description} />
 		<meta property="og:image" content={m.ogImage} />

@@ -12,6 +12,9 @@ export function GET(context: APIContext) {
   const body = [
     "User-agent: *",
     "Allow: /",
+    // Personal app + API surfaces are not for crawling/indexing.
+    "Disallow: /app",
+    "Disallow: /api",
     "",
     // Astro's sitemap integration outputs sitemap-index.xml.
     `Sitemap: ${site}/sitemap-index.xml`,

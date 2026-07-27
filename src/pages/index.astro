@@ -17,9 +17,10 @@ import ResourcesTeaser from "@/components/sections/ResourcesTeaser.astro";
 import Faq from "@/components/sections/Faq.astro";
 import FinalCta from "@/components/sections/FinalCta.astro";
 import ProductTabs from "@/components/interactive/ProductTabs.tsx";
-import { websiteLd, softwareApplicationLd } from "@/lib/seo";
+import { organizationLd, websiteLd, softwareApplicationLd } from "@/lib/seo";
 
 const siteUrl = Astro.site?.href ?? import.meta.env.PUBLIC_SITE_URL;
+const organizationJsonLd = organizationLd(siteUrl);
 const websiteJsonLd = websiteLd(siteUrl);
 const softwareJsonLd = softwareApplicationLd(siteUrl);
 ---
@@ -52,11 +53,16 @@ const softwareJsonLd = softwareApplicationLd(siteUrl);
 	<Faq />
 	<FinalCta />
 
-	<script
-		type="application/ld+json"
-		set:html={JSON.stringify(websiteJsonLd)}
-		is:inline
-	/>
+		<script
+			type="application/ld+json"
+			set:html={JSON.stringify(organizationJsonLd)}
+			is:inline
+		/>
+		<script
+			type="application/ld+json"
+			set:html={JSON.stringify(websiteJsonLd)}
+			is:inline
+		/>
 	<script
 		type="application/ld+json"
 		set:html={JSON.stringify(softwareJsonLd)}

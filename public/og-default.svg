@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Qinobee">
+  <rect width="1200" height="630" fill="#fffdf4"/>
+  <rect x="24" y="24" width="1152" height="582" fill="#fffdf4" stroke="#171717" stroke-width="8"/>
+  <rect x="24" y="24" width="1152" height="120" fill="#ffd9e8" stroke="#171717" stroke-width="8"/>
+  <text x="72" y="108" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="800" fill="#171717">Qinobee</text>
+  <text x="72" y="320" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="800" fill="#171717">Student success &amp;</text>
+  <text x="72" y="408" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="800" fill="#171717">career development</text>
+  <text x="72" y="520" font-family="Georgia, 'Times New Roman', serif" font-size="34" fill="#171717">An integrated platform for modern educational institutions.</text>
+</svg>

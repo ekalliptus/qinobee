@@ -36,7 +36,9 @@ export function buildMeta(input: MetaInput, siteUrl?: string): MetaOutput {
 	const description = input.description ?? siteConfig.description;
 	const robots = input.noindex ? "noindex,nofollow" : "index,follow";
 	const canonical = input.canonical ? resolveUrl(input.canonical, base) : undefined;
-	const ogImage = resolveUrl(input.ogImage ?? "/og-default.png", base);
+	// SVG fallback (original branded card). PNG is generally preferred for OG,
+	// but authoring a rasterized card here is out of scope; SVG is acceptable.
+	const ogImage = resolveUrl(input.ogImage ?? "/og-default.svg", base);
 	const type = input.type ?? "website";
 	return { title, description, canonical, ogImage, robots, type };
 }
@@ -87,6 +89,44 @@ export function breadcrumbLd(items: { name: string; url: string }[]) {
 			name: item.name,
 			item: item.url,
 		})),
+	};
+}
+
+export interface ArticleLdInput {
+	title: string;
+	description: string;
+	publishedAt: string | Date;
+	updatedAt?: string | Date;
+	author: string;
+	url: string; // absolute or path
+	image?: string; // absolute or path
+}
+
+export function articleLd(input: ArticleLdInput, siteUrl?: string) {
+	const base = resolveSiteUrl(siteUrl);
+	const toIso = (d: string | Date) => (d instanceof Date ? d.toISOString() : d);
+	return {
+		"@context": "https://schema.org",
+		"@type": "Article",
+		headline: input.title,
+		description: input.description,
+		datePublished: toIso(input.publishedAt),
+		...(input.updatedAt ? { dateModified: toIso(input.updatedAt) } : {}),
+		author: { "@type": "Person", name: input.author },
+		publisher: { "@type": "Organization", name: siteConfig.name },
+		mainEntityOfPage: resolveUrl(input.url, base),
+		image: resolveUrl(input.image ?? "/og-default.svg", base),
+	};
+}
+
+export function contactPageLd(url: string, siteUrl?: string) {
+	const base = resolveSiteUrl(siteUrl);
+	return {
+		"@context": "https://schema.org",
+		"@type": "ContactPage",
+		name: `Contact ${siteConfig.name}`,
+		description: siteConfig.description,
+		url: resolveUrl(url, base),
 	};
 }
 

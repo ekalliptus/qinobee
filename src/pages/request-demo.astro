@@ -10,6 +10,7 @@ import { getDb } from "@/lib/db/client";
 import { DemoService } from "@/lib/services/demo-service";
 import { demoSchema, SOLUTIONS } from "@/lib/services/demo-schema";
 import { rateLimit } from "@/lib/rate-limit";
+import { contactPageLd } from "@/lib/seo";
 
 const SIZES = ["1-100", "100-1000", "1000-5000", "5000-20000", "20000+"];
 const CONTACTS = ["email", "phone", "either"] as const;
@@ -93,6 +94,9 @@ if (Astro.request.method === "POST") {
 const inputCls =
   "border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] px-3 py-2 w-full bg-[var(--color-white)]";
 const errCls = "text-sm text-[var(--color-red)] font-medium";
+
+const siteUrl = Astro.site?.href ?? import.meta.env.PUBLIC_SITE_URL;
+const contactJsonLd = contactPageLd("/request-demo", siteUrl);
 ---
 
 <MarketingLayout
@@ -365,4 +369,10 @@ const errCls = "text-sm text-[var(--color-red)] font-medium";
       </div>
     </Container>
   </Section>
+
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(contactJsonLd)}
+    is:inline
+  />
 </MarketingLayout>
