@@ -2,6 +2,10 @@ import { defineMiddleware } from "astro:middleware";
 import { SESSION_COOKIE } from "@/lib/auth/cookies";
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Prerendered (static) routes have no per-request session; skip cookie/DB work.
+  // Also avoids reading request.headers during the build, which Astro warns about.
+  if (context.isPrerendered) return next();
+
   const path = context.url.pathname;
   const isAppRoute = path.startsWith("/app");
   const hasCookie = context.cookies.has(SESSION_COOKIE);
