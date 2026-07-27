@@ -148,6 +148,30 @@ export const skillGroupSchema = z.object({
   skills: z.array(boundedText(60)).default([]),
 });
 
+// ---- Template settings ----------------------------------------------------
+
+/**
+ * User-tunable template appearance. Every bound is enforced to keep resumes
+ * legible and printable (readable font, safe A4 margins, sane line-height,
+ * legible accent). settings.ts reads these same keys with fallbacks; this
+ * schema is the server-side backstop for the customisation UI.
+ */
+export const resumeTemplateSettingsSchema = z
+  .object({
+    fontFamily: boundedText(160),
+    fontScale: z.number().min(0.85).max(1.25),
+    lineHeight: z.number().min(1.1).max(1.8),
+    sectionSpacing: z.number().min(2).max(14),
+    margin: z.number().min(10).max(25),
+    headingStyle: boundedText(40),
+    accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+    divider: z.boolean(),
+    alignment: z.enum(["left", "center"]),
+    showPhoto: z.boolean(),
+    showLinks: z.boolean(),
+  })
+  .partial();
+
 // ---- Custom sections & section ordering -----------------------------------
 
 export const customSectionSchema = z.object({

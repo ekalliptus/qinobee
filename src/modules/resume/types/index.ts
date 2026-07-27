@@ -19,6 +19,9 @@ export type ResumeSectionReference = z.infer<
   typeof S.resumeSectionReferenceSchema
 >;
 export type ResumeScore = z.infer<typeof S.resumeScoreSchema>;
+export type ResumeTemplateSettings = z.infer<
+  typeof S.resumeTemplateSettingsSchema
+>;
 export type ResumeDocument = z.infer<typeof S.resumeDocumentSchema>;
 export type CreateResumeInput = z.infer<typeof S.createResumeInputSchema>;
 export type UpdateResumeInput = z.infer<typeof S.updateResumeInputSchema>;

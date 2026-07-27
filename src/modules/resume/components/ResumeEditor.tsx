@@ -11,6 +11,8 @@ import EducationSection from "./sections/EducationSection";
 import ProjectsSection from "./sections/ProjectsSection";
 import SkillsSection from "./sections/SkillsSection";
 import Preview from "./Preview";
+import TemplatePanel from "./TemplatePanel";
+import type { ResumeTemplateSettings } from "@modules/resume/types";
 
 /** Editable subset only — the exact keys accepted by updateResumeInputSchema. */
 export function toPatch(doc: ResumeDocument): UpdateResumeInput {
@@ -90,6 +92,20 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
   const [active, setActive] = useState<SectionKey>("personalInformation");
   const [mobileTab, setMobileTab] = useState<MobileTab>("edit");
   const [conflictDismissed, setConflictDismissed] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const templatePanel = (
+    <TemplatePanel
+      resume={store.doc}
+      onTemplateChange={(id) => store.update({ templateId: id })}
+      onSettingsChange={(patch: Partial<ResumeTemplateSettings>) =>
+        store.update({
+          templateSettings: { ...store.doc.templateSettings, ...patch },
+        })
+      }
+      onReset={() => store.update({ templateSettings: {} })}
+    />
+  );
 
   const status = store.save.status;
   useEffect(() => {
@@ -128,6 +144,24 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
           <button type="button" className={BTN} onClick={store.saveNow}>
             Save now
           </button>
+          <button
+            type="button"
+            className={BTN}
+            aria-pressed={showTemplates}
+            aria-expanded={showTemplates}
+            onClick={() => setShowTemplates((v) => !v)}
+          >
+            Template
+          </button>
+          <a
+            href={`/app/resume/${store.doc.id}/export`}
+            target="_blank"
+            rel="noopener"
+            className={BTN}
+            aria-label="Download PDF"
+          >
+            Download PDF
+          </a>
         </div>
       </div>
 
@@ -143,6 +177,23 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
               Keep editing
             </button>
           </div>
+        </div>
+      ) : null}
+
+      {/* Template + appearance panel */}
+      {showTemplates ? (
+        <div className="neo-card">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-lg font-bold">Template &amp; appearance</h2>
+            <button
+              type="button"
+              className={BTN}
+              onClick={() => setShowTemplates(false)}
+            >
+              Close
+            </button>
+          </div>
+          {templatePanel}
         </div>
       ) : null}
 
