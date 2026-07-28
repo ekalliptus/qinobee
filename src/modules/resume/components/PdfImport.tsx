@@ -1,4 +1,5 @@
 import { useCallback, useId, useRef, useState } from "react";
+import { features } from "@/config/features";
 
 /**
  * I3 — In-browser PDF text extraction island.
@@ -17,7 +18,7 @@ const MAX_PAGES = 15;
 const MAX_TEXT_CHARS = 100_000;
 const PREVIEW_CHARS = 500;
 
-type Phase = "idle" | "reading" | "ready" | "submitting" | "error";
+type Phase = "idle" | "reading" | "ready" | "submitting" | "awaiting-consent" | "error";
 
 const NEO_INPUT =
   "neo-input min-h-[44px] w-full border-2 px-3";
@@ -40,10 +41,14 @@ export default function PdfImport() {
   const [language, setLanguage] = useState<"id" | "en">("id");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [useAi, setUseAi] = useState(false);
 
+  const aiEnabled = features.aiAssist;
   const errorId = useId();
   const progressId = useId();
   const previewId = useId();
+  const aiHelpId = useId();
+  const consentDescId = useId();
 
   const reset = useCallback(() => {
     setPhase("idle");
@@ -136,62 +141,140 @@ export default function PdfImport() {
     [extract]
   );
 
+  // POST the extracted text to create the draft. `withAi` sends the text to the
+  // AI provider server-side; consent is verified before this is ever called.
+  const doImport = useCallback(
+    async (withAi: boolean) => {
+      setPhase("submitting");
+      setError(null);
+      setWarnings([]);
+      try {
+        const res = await fetch("/api/resume/import", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            text,
+            title: title.trim() || undefined,
+            language,
+            templateId: "essential",
+            useAi: withAi,
+          }),
+        });
+
+        if (res.status === 401) {
+          window.location.href = "/login?next=/app/resume/new";
+          return;
+        }
+        // Defensive: consent flow should have run, but honour a server 403.
+        if (res.status === 403) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          if (body?.error === "consent_required") {
+            setPhase("awaiting-consent");
+            return;
+          }
+        }
+        if (!res.ok) {
+          setPhase("error");
+          setError(
+            res.status === 413
+              ? "The extracted text is too large for the server. Try a shorter CV."
+              : res.status === 429
+                ? "Too many imports right now. Please wait a minute and try again."
+                : res.status === 400
+                  ? "The server rejected the extracted text. Try a different PDF."
+                  : "Something went wrong creating your draft. Please try again."
+          );
+          return;
+        }
+
+        const body = (await res.json()) as {
+          ok: boolean;
+          id?: string;
+          warnings?: string[];
+          aiStructured?: boolean;
+        };
+        if (!body.ok || !body.id) {
+          setPhase("error");
+          setError("Something went wrong creating your draft. Please try again.");
+          return;
+        }
+        if (body.warnings?.length) setWarnings(body.warnings);
+        if (body.aiStructured) {
+          setProgress("AI organised your experience & education — review on the next screen.");
+        }
+        window.location.href = "/app/resume/" + body.id + "/edit";
+      } catch {
+        setPhase("error");
+        setError("Network error. Check your connection and try again.");
+      }
+    },
+    [text, title, language]
+  );
+
+  // Entry point for "Create draft". Checks consent first when AI is on.
   const submit = useCallback(async () => {
+    if (useAi && aiEnabled) {
+      setPhase("submitting");
+      setError(null);
+      try {
+        const res = await fetch("/api/resume/ai/consent", {
+          method: "GET",
+          credentials: "same-origin",
+        });
+        if (res.status === 401) {
+          window.location.href = "/login?next=/app/resume/new";
+          return;
+        }
+        if (res.ok) {
+          const body = (await res.json()) as { consent?: boolean };
+          if (!body.consent) {
+            setPhase("awaiting-consent");
+            return;
+          }
+        }
+        // On any non-OK GET, fall through: doImport handles a 403 defensively.
+      } catch {
+        // Network hiccup on the check: let doImport surface the real error.
+      }
+    }
+    await doImport(useAi && aiEnabled);
+  }, [useAi, aiEnabled, doImport]);
+
+  // User accepted the inline consent step: record consent, then import with AI.
+  const acceptConsent = useCallback(async () => {
     setPhase("submitting");
     setError(null);
-    setWarnings([]);
     try {
-      const res = await fetch("/api/resume/import", {
+      const res = await fetch("/api/resume/ai/consent", {
         method: "POST",
         credentials: "same-origin",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          text,
-          title: title.trim() || undefined,
-          language,
-          templateId: "essential",
-        }),
       });
-
-      if (res.status === 401) {
-        window.location.href = "/login?next=/app/resume/new";
-        return;
-      }
-      if (!res.ok) {
-        setPhase("error");
-        setError(
-          res.status === 413
-            ? "The extracted text is too large for the server. Try a shorter CV."
-            : res.status === 429
-              ? "Too many imports right now. Please wait a minute and try again."
-              : res.status === 400
-                ? "The server rejected the extracted text. Try a different PDF."
-                : "Something went wrong creating your draft. Please try again."
-        );
-        return;
-      }
-
-      const body = (await res.json()) as { ok: boolean; id?: string; warnings?: string[] };
-      if (!body.ok || !body.id) {
-        setPhase("error");
-        setError("Something went wrong creating your draft. Please try again.");
-        return;
-      }
-      if (body.warnings?.length) setWarnings(body.warnings);
-      window.location.href = "/app/resume/" + body.id + "/edit";
+      if (!res.ok) throw new Error(String(res.status));
+      await doImport(true);
     } catch {
-      setPhase("error");
-      setError("Network error. Check your connection and try again.");
+      setPhase("awaiting-consent");
+      setError("Could not save your choice. Please try again.");
     }
-  }, [text, title, language]);
+  }, [doImport]);
+
+  // User declined AI: continue with the deterministic, server-only import.
+  const declineConsent = useCallback(() => {
+    setUseAi(false);
+    setError(null);
+    void doImport(false);
+  }, [doImport]);
 
   const busy = phase === "reading" || phase === "submitting";
+  const locked = phase === "submitting" || phase === "awaiting-consent";
 
   return (
     <div className="mt-2 flex flex-col gap-3" style={{ color: "var(--color-ink)" }}>
       <p className="text-sm">
-        <strong>Private by design:</strong> your PDF is read in your browser. Only the extracted
-        text is sent to create a draft you can review and edit. Parsing isn&apos;t perfect.
+        <strong>Private by design:</strong> your PDF is read in your browser — the file itself
+        never leaves your device. Only the extracted text is sent to create a draft you can
+        review and edit. With AI structuring off, that text stays on our server only; with AI on,
+        the extracted text is also sent to the AI provider. Parsing isn&apos;t perfect.
       </p>
 
       {/* Drop zone + keyboard-accessible picker trigger */}
@@ -266,7 +349,7 @@ export default function PdfImport() {
         </p>
       ) : null}
 
-      {phase === "ready" || phase === "submitting" ? (
+      {phase === "ready" || phase === "submitting" || phase === "awaiting-consent" ? (
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1">
             <span className="text-sm font-semibold">Resume name</span>
@@ -276,6 +359,7 @@ export default function PdfImport() {
               style={{ ...INK, background: "var(--color-white)" }}
               value={title}
               maxLength={160}
+              disabled={locked}
               onChange={(e) => setTitle(e.target.value)}
             />
           </label>
@@ -286,6 +370,7 @@ export default function PdfImport() {
               className={NEO_INPUT}
               style={{ ...INK, background: "var(--color-white)" }}
               value={language}
+              disabled={locked}
               onChange={(e) => setLanguage(e.target.value as "id" | "en")}
             >
               <option value="id">Bahasa Indonesia</option>
@@ -310,6 +395,66 @@ export default function PdfImport() {
             ) : null}
           </div>
 
+          {aiEnabled ? (
+            <div className="flex flex-col gap-1">
+              <label className="flex items-start gap-2 text-sm font-semibold">
+                <input
+                  type="checkbox"
+                  className="mt-1 min-h-[20px] min-w-[20px]"
+                  checked={useAi}
+                  disabled={locked}
+                  aria-describedby={aiHelpId}
+                  onChange={(e) => setUseAi(e.target.checked)}
+                />
+                <span>Use AI to structure my experience &amp; education</span>
+              </label>
+              <p id={aiHelpId} className="pl-7 text-xs opacity-70">
+                Sends the extracted text to the AI provider to organise it into entries. You can
+                review everything before saving. Rule-based import is used if you leave this off.
+              </p>
+            </div>
+          ) : null}
+
+          {phase === "awaiting-consent" ? (
+            <div
+              role="group"
+              aria-labelledby={consentDescId}
+              className="flex flex-col gap-2 border-2 p-3"
+              style={{ borderColor: "var(--color-ink)", background: "var(--color-yellow)" }}
+            >
+              <p id={consentDescId} className="text-sm font-semibold">
+                Enable AI structuring?
+              </p>
+              <p className="text-sm">
+                To organise your experience &amp; education, the full extracted text is sent to the
+                AI provider. Nothing is saved until you review the draft. You can also continue
+                without AI — your text then stays on our server only.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={NEO_BUTTON}
+                  style={{
+                    borderColor: "var(--color-ink)",
+                    background: "var(--color-ink)",
+                    color: "var(--color-paper)",
+                  }}
+                  onClick={() => void acceptConsent()}
+                >
+                  Enable AI &amp; continue
+                </button>
+                <button
+                  type="button"
+                  className={NEO_BUTTON}
+                  style={{ ...INK, background: "var(--color-white)" }}
+                  onClick={declineConsent}
+                >
+                  Continue without AI
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           {warnings.length ? (
             <ul className="list-disc pl-5 text-xs">
               {warnings.map((w, i) => (
@@ -323,7 +468,7 @@ export default function PdfImport() {
               type="button"
               className={NEO_BUTTON}
               style={{ borderColor: "var(--color-ink)", background: "var(--color-ink)", color: "var(--color-paper)" }}
-              disabled={phase === "submitting"}
+              disabled={locked}
               aria-describedby={`${previewId} ${progressId}`}
               onClick={() => void submit()}
             >
@@ -333,7 +478,7 @@ export default function PdfImport() {
               type="button"
               className={NEO_BUTTON}
               style={{ ...INK, background: "var(--color-white)" }}
-              disabled={phase === "submitting"}
+              disabled={locked}
               onClick={reset}
             >
               Choose a different file
