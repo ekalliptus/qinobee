@@ -10,6 +10,7 @@ import type {
 } from "@modules/resume/types";
 import { parseResumeText } from "./parse-resume-text";
 import type { ParsedResume } from "./parse-resume-text";
+import type { AiService } from "@modules/resume/services/ai-service";
 
 // customSectionSchema item `description` is boundedText(2000); cap raw text so
 // the patch always validates. Nothing is lost that the parser cannot already
@@ -103,24 +104,65 @@ export interface ImportOptions {
   title?: string;
   language?: "id" | "en";
   templateId?: string;
+  /** Opt into AI structuring. Consent/enablement are the caller's concern. */
+  useAi?: boolean;
+  /** Injected so tests exercise the AI path without any network. */
+  aiService?: AiService;
 }
 
 /**
  * Thin, HTTP-free orchestration used by the import endpoint (and tests): parse
  * the text, seed a fresh DRAFT résumé, and apply the parsed fields as a patch.
- * Returns the new id plus parser warnings for the caller to surface.
+ * When `useAi` and an `aiService` are supplied, raw experience/education text is
+ * structured into workExperiences/educations; the matching "Imported:" custom
+ * section is then dropped only for the part that was structured. Falls back to
+ * the deterministic custom-section behavior when AI is off/empty/failed.
+ * Returns the new id, parser warnings, and whether AI structuring took effect.
  */
 export async function importResume(
   db: SqlDb,
   userId: string,
   opts: ImportOptions,
-): Promise<{ id: string; warnings: string[] }> {
+): Promise<{ id: string; warnings: string[]; aiStructured: boolean }> {
   const parsed = parseResumeText(opts.text);
+  const language = opts.language ?? "en";
   const { input, patch } = parsedToResumeSeed(parsed, {
     title: opts.title ?? deriveTitle(parsed),
-    language: opts.language ?? "en",
+    language,
     templateId: opts.templateId ?? "essential",
   });
+
+  const warnings = [...parsed.warnings];
+  let aiStructured = false;
+
+  if (opts.useAi && opts.aiService && (parsed.experienceText || parsed.educationText)) {
+    const { workExperiences, educations } = await opts.aiService.structureSections({
+      experienceText: parsed.experienceText,
+      educationText: parsed.educationText,
+      language,
+    });
+    const dropTitles: string[] = [];
+    if (workExperiences.length > 0) {
+      patch.workExperiences = workExperiences;
+      dropTitles.push("Imported: Experience");
+    }
+    if (educations.length > 0) {
+      patch.educations = educations;
+      dropTitles.push("Imported: Education");
+    }
+    if (dropTitles.length > 0) {
+      aiStructured = true;
+      if (patch.customSections) {
+        const kept = patch.customSections.filter((s) => !dropTitles.includes(s.title));
+        if (kept.length > 0) patch.customSections = kept;
+        else delete patch.customSections;
+      }
+      warnings.push(
+        `AI structured ${workExperiences.length} experience and ${educations.length} education entries — please review.`,
+      );
+    }
+  }
+
   const svc = createResumeService(db);
   const created = await svc.create({ userId, input });
   const updated = await svc.update(userId, created.id, {
@@ -128,5 +170,5 @@ export async function importResume(
     patch,
     reason: "import",
   });
-  return { id: updated.id, warnings: parsed.warnings };
+  return { id: updated.id, warnings, aiStructured };
 }

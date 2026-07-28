@@ -1,8 +1,10 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { getSqlDb } from "@lib/db/client";
+import { getSqlDb, getEnv } from "@lib/db/client";
 import { AuthService } from "@lib/auth/service";
 import { getSessionUser } from "@lib/auth/middleware";
+import { hasAiConsent } from "@lib/auth/consent";
+import { getAiService } from "@modules/resume/services/ai-service";
 import { rateLimit } from "@lib/rate-limit";
 import { importResume } from "@modules/resume/import/build-import-input";
 
@@ -22,6 +24,7 @@ const importBodySchema = z.object({
   title: z.string().trim().min(1).max(160).optional(),
   language: z.enum(["id", "en"]).optional(),
   templateId: z.string().min(1).max(80).optional(),
+  useAi: z.boolean().optional().default(false),
 });
 
 export const POST: APIRoute = async (ctx) => {
@@ -58,15 +61,30 @@ export const POST: APIRoute = async (ctx) => {
   const parsedBody = importBodySchema.safeParse(raw);
   if (!parsedBody.success) return json({ ok: false }, 400);
 
+  const { useAi, ...seed } = parsedBody.data;
+
+  // AI sends CV text to the provider: require explicit, recorded consent.
+  let aiService;
+  if (useAi) {
+    if (!(await hasAiConsent(db, user.id))) {
+      return json({ ok: false, error: "consent_required" }, 403);
+    }
+    aiService = getAiService(getEnv(locals));
+  }
+
   try {
-    // Never log parsedBody.data.text — it is user CV content.
-    const { id, warnings } = await importResume(db, user.id, parsedBody.data);
+    // Never log seed.text — it is user CV content.
+    const { id, warnings, aiStructured } = await importResume(db, user.id, {
+      ...seed,
+      useAi,
+      aiService,
+    });
 
     // Form fallback: full-page POST (Accept: text/html) → redirect to editor.
     if ((request.headers.get("accept") ?? "").includes("text/html")) {
       return ctx.redirect(`/app/resume/${id}/edit`, 303);
     }
-    return json({ ok: true, id, warnings }, 200);
+    return json({ ok: true, id, warnings, aiStructured }, 200);
   } catch {
     return json({ ok: false }, 500);
   }
