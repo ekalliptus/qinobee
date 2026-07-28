@@ -103,34 +103,48 @@ export async function callChatCompletion(
     else signal.addEventListener("abort", () => controller.abort(), { once: true });
   }
 
+  const body = JSON.stringify({
+    model,
+    messages,
+    temperature: 0.4,
+    // Force a single non-streaming envelope. The router (OpenAI-compatible)
+    // streams SSE by default; without this the body is `data: {chunk}` lines
+    // that res.json() cannot parse. parseSuggestion() strips any ```json fences.
+    stream: false,
+  });
+
   try {
-    const res = await fetchImpl(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature: 0.4,
-        // Force a single non-streaming envelope. The router (OpenAI-compatible)
-        // streams SSE by default; without this the body is `data: {chunk}` lines
-        // that res.json() cannot parse. parseSuggestion() strips any ```json fences.
-        stream: false,
-      }),
-      signal: controller.signal,
-    });
+    // The upstream router occasionally returns a transient 5xx; retry once.
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetchImpl(`${baseUrl}/chat/completions`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${apiKey}`,
+          },
+          body,
+          signal: controller.signal,
+        });
 
-    if (!res.ok) throw new Error(`provider responded ${res.status}`);
+        if (!res.ok) throw new Error(`provider responded ${res.status}`);
 
-    const data: unknown = await res.json();
-    const content = (data as { choices?: Array<{ message?: { content?: unknown } }> })
-      ?.choices?.[0]?.message?.content;
-    if (typeof content !== "string" || content.length === 0) {
-      throw new Error("malformed provider response");
+        const data: unknown = await res.json();
+        const content = (data as { choices?: Array<{ message?: { content?: unknown } }> })
+          ?.choices?.[0]?.message?.content;
+        if (typeof content !== "string" || content.length === 0) {
+          throw new Error("malformed provider response");
+        }
+        return content;
+      } catch (err) {
+        lastErr = err;
+        // Don't retry if the caller/timeout aborted or this was the last attempt.
+        if (controller.signal.aborted || attempt === 1) throw err;
+        await new Promise((r) => setTimeout(r, 400));
+      }
     }
-    return content;
+    throw lastErr;
   } finally {
     clearTimeout(timer);
   }

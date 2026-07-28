@@ -80,6 +80,27 @@ test("structureSections: enabled maps a valid provider response to structured en
   expect(res.educations[0]!.degree).toBe("BSc");
 });
 
+test("structureSections: coerces string years from the model (real router behaviour)", async () => {
+  // The live model frequently returns years as strings, e.g. "2020".
+  const payload = {
+    workExperiences: [
+      { jobTitle: "Senior Engineer", company: "Analytical Co", startYear: "2020", currentlyWorking: true, bullets: ["Led billing migration"] },
+      { jobTitle: "Junior Developer", company: "Webworks", startYear: "2018", endYear: "2020", bullets: ["Shipped features"] },
+    ],
+    educations: [{ institution: "Meridian University", degree: "BSc", fieldOfStudy: "Computer Science", startYear: "2014", endYear: "2018" }],
+  };
+  const fakeFetch = (async () =>
+    new Response(envelope(payload), { status: 200, headers: { "content-type": "application/json" } })) as unknown as typeof fetch;
+  const svc = createAiService({ apiKey: "test-key", fetchImpl: fakeFetch });
+  const res = await svc.structureSections({ experienceText: "x", educationText: "y", language: "en" });
+  expect(res.source).toBe("ai");
+  expect(res.workExperiences.length).toBe(2);
+  expect(res.workExperiences[0]!.startYear).toBe(2020); // coerced from "2020"
+  expect(res.workExperiences[1]!.endYear).toBe(2020);
+  expect(res.educations.length).toBe(1);
+  expect(res.educations[0]!.endYear).toBe(2018);
+});
+
 test("structureSections: garbage (non-JSON) provider output falls back, never throws", async () => {
   const fakeFetch = (async () =>
     new Response(JSON.stringify({ choices: [{ message: { content: "<html>nope</html>" } }] }), {
