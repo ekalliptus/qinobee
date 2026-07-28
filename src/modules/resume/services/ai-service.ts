@@ -1,13 +1,21 @@
-import type { ResumeDocument } from "@modules/resume/types";
+import type { ResumeDocument, WorkExperience, Education } from "@modules/resume/types";
 import type { JobMatchResult } from "@modules/resume/matcher/types";
 import { matchJob } from "@modules/resume/matcher/matcher";
 import { hasActionVerb } from "@modules/resume/utils/empty";
+import { workExperienceSchema, educationSchema } from "@modules/resume/schemas";
 import {
   buildImproveBulletMessages,
   buildImproveSummaryMessages,
   buildSuggestSkillsMessages,
+  buildStructureSectionsMessages,
 } from "@lib/ai/prompts";
-import { callChatCompletion, parseSuggestion } from "@lib/ai/client";
+import { callChatCompletion, parseSuggestion, parseJsonObject } from "@lib/ai/client";
+import {
+  structuredExperienceSchema,
+  structuredEducationSchema,
+  type StructuredExperience,
+  type StructuredEducation,
+} from "@lib/ai/types";
 import type {
   SuggestionResult,
   SkillSuggestionsResult,
@@ -46,12 +54,24 @@ export interface AnalyseJobMatchInput {
   jobDescription: string;
 }
 
+export interface StructureSectionsInput {
+  experienceText?: string;
+  educationText?: string;
+  language: "id" | "en";
+}
+export interface StructureSectionsResult {
+  workExperiences: WorkExperience[];
+  educations: Education[];
+  source: "ai" | "fallback";
+}
+
 export interface AiService {
   readonly enabled: boolean;
   improveBullet(input: ImproveBulletInput): Promise<SuggestionResult>;
   improveSummary(input: ImproveSummaryInput): Promise<SuggestionResult>;
   suggestSkills(input: SuggestSkillsInput): Promise<SkillSuggestionsResult>;
   analyseJobMatch(input: AnalyseJobMatchInput): Promise<JobMatchAiResult>;
+  structureSections(input: StructureSectionsInput): Promise<StructureSectionsResult>;
 }
 
 function trimInput(text: string): string {
@@ -111,6 +131,79 @@ function fallbackMatch(input: AnalyseJobMatchInput): JobMatchAiResult {
   return { result, source: "fallback" };
 }
 
+// ---- Structuring: map extract-only AI items to schema-valid entries -------
+//
+// Required-field handling (extract-only, never fabricate content):
+//   WorkExperience requires jobTitle, company, employmentType, startMonth,
+//   startYear. jobTitle/company are content — if absent the item is DROPPED
+//   (structuredExperienceSchema already enforces both are non-empty).
+//   employmentType is a structural enum: the AI's free text is mapped to the
+//   nearest enum, else defaulted to "full-time" (a structural default, not a
+//   content claim). startYear is a date anchor: if the text yielded no year we
+//   DROP the item rather than invent one. startMonth defaults to 1 only when a
+//   year IS present (year is the stated anchor; month granularity is a
+//   structural default). currentlyWorking defaults false; bullets/skillsUsed
+//   default []. Education only requires institution.
+
+const EMPLOYMENT_ENUM = [
+  "full-time",
+  "part-time",
+  "internship",
+  "contract",
+  "freelance",
+  "apprenticeship",
+  "volunteer",
+] as const;
+type EmploymentType = (typeof EMPLOYMENT_ENUM)[number];
+
+function mapEmploymentType(raw?: string): EmploymentType {
+  if (!raw) return "full-time";
+  const n = raw.toLowerCase().replace(/[\s_]+/g, "-");
+  if ((EMPLOYMENT_ENUM as readonly string[]).includes(n)) return n as EmploymentType;
+  if (n.includes("full")) return "full-time";
+  if (n.includes("part")) return "part-time";
+  if (n.includes("intern")) return "internship";
+  if (n.includes("contract") || n.includes("kontrak")) return "contract";
+  if (n.includes("free")) return "freelance";
+  if (n.includes("apprentice")) return "apprenticeship";
+  if (n.includes("volunt") || n.includes("relawan")) return "volunteer";
+  return "full-time";
+}
+
+function mapExperience(item: StructuredExperience): WorkExperience | null {
+  if (item.startYear === undefined) return null; // no date anchor -> don't invent
+  const candidate: Record<string, unknown> = {
+    jobTitle: item.jobTitle,
+    company: item.company,
+    employmentType: mapEmploymentType(item.employmentType),
+    startMonth: item.startMonth ?? 1,
+    startYear: item.startYear,
+    currentlyWorking: item.currentlyWorking ?? false,
+    bullets: item.bullets ?? [],
+    skillsUsed: [],
+  };
+  if (item.city) candidate.city = item.city;
+  if (item.country) candidate.country = item.country;
+  if (item.endMonth !== undefined) candidate.endMonth = item.endMonth;
+  if (item.endYear !== undefined) candidate.endYear = item.endYear;
+  const parsed = workExperienceSchema.safeParse(candidate);
+  return parsed.success ? parsed.data : null;
+}
+
+function mapEducation(item: StructuredEducation): Education | null {
+  const candidate: Record<string, unknown> = {
+    institution: item.institution,
+    currentlyStudying: item.currentlyStudying ?? false,
+  };
+  if (item.degree) candidate.degree = item.degree;
+  if (item.fieldOfStudy) candidate.fieldOfStudy = item.fieldOfStudy;
+  if (item.startYear !== undefined) candidate.startYear = item.startYear;
+  if (item.endYear !== undefined) candidate.endYear = item.endYear;
+  if (item.description) candidate.description = item.description;
+  const parsed = educationSchema.safeParse(candidate);
+  return parsed.success ? parsed.data : null;
+}
+
 export function createAiService(opts: AiServiceOptions = {}): AiService {
   const apiKey = opts.apiKey ?? "";
   const baseUrl = opts.baseUrl ?? "https://router.ekalliptus.com/v1";
@@ -165,6 +258,48 @@ export function createAiService(opts: AiServiceOptions = {}): AiService {
     async analyseJobMatch(input) {
       // Deterministic matcher is always the backbone; AI never overrides it.
       return fallbackMatch(input);
+    },
+
+    async structureSections(input) {
+      const experienceText = trimInput(input.experienceText ?? "");
+      const educationText = trimInput(input.educationText ?? "");
+      const empty: StructureSectionsResult = {
+        workExperiences: [],
+        educations: [],
+        source: "fallback",
+      };
+      if (!enabled) return empty;
+      if (!experienceText.trim() && !educationText.trim()) return empty;
+      try {
+        const content = await complete(
+          buildStructureSectionsMessages({ experienceText, educationText, language: input.language }),
+        );
+        const obj = parseJsonObject(content);
+        if (!obj || typeof obj !== "object") return empty;
+        const rawExp = (obj as { workExperiences?: unknown }).workExperiences;
+        const rawEdu = (obj as { educations?: unknown }).educations;
+        const workExperiences: WorkExperience[] = [];
+        if (Array.isArray(rawExp)) {
+          for (const raw of rawExp.slice(0, 30)) {
+            const s = structuredExperienceSchema.safeParse(raw);
+            if (!s.success) continue; // drops items missing jobTitle/company
+            const mapped = mapExperience(s.data);
+            if (mapped) workExperiences.push(mapped);
+          }
+        }
+        const educations: Education[] = [];
+        if (Array.isArray(rawEdu)) {
+          for (const raw of rawEdu.slice(0, 30)) {
+            const s = structuredEducationSchema.safeParse(raw);
+            if (!s.success) continue; // drops items missing institution
+            const mapped = mapEducation(s.data);
+            if (mapped) educations.push(mapped);
+          }
+        }
+        return { workExperiences, educations, source: "ai" };
+      } catch {
+        return empty;
+      }
     },
   };
 }

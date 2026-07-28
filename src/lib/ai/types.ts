@@ -20,6 +20,40 @@ export const skillSuggestionsSchema = z.object({
 });
 export type SkillSuggestions = z.infer<typeof skillSuggestionsSchema>;
 
+// ---- Structure imported sections (extract-only) ---------------------------
+
+export const structuredExperienceSchema = z.object({
+  jobTitle: z.string().min(1).max(120),
+  company: z.string().min(1).max(160),
+  employmentType: z.string().max(40).optional(),
+  city: z.string().max(120).optional(),
+  country: z.string().max(80).optional(),
+  startMonth: z.number().int().min(1).max(12).optional(),
+  startYear: z.number().int().min(1950).max(2100).optional(),
+  endMonth: z.number().int().min(1).max(12).optional(),
+  endYear: z.number().int().min(1950).max(2100).optional(),
+  currentlyWorking: z.boolean().optional(),
+  bullets: z.array(z.string().max(500)).max(20).optional(),
+});
+export type StructuredExperience = z.infer<typeof structuredExperienceSchema>;
+
+export const structuredEducationSchema = z.object({
+  institution: z.string().min(1).max(160),
+  degree: z.string().max(120).optional(),
+  fieldOfStudy: z.string().max(120).optional(),
+  startYear: z.number().int().min(1950).max(2100).optional(),
+  endYear: z.number().int().min(1950).max(2100).optional(),
+  currentlyStudying: z.boolean().optional(),
+  description: z.string().max(2000).optional(),
+});
+export type StructuredEducation = z.infer<typeof structuredEducationSchema>;
+
+export const structureResponseSchema = z.object({
+  workExperiences: z.array(structuredExperienceSchema).max(30).default([]),
+  educations: z.array(structuredEducationSchema).max(30).default([]),
+});
+export type StructureResponse = z.infer<typeof structureResponseSchema>;
+
 export type AiResult<T> = T & { source: "ai" | "fallback" };
 
 export type SuggestionResult = AiResult<Suggestion>;

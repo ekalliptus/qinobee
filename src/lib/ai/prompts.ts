@@ -59,6 +59,40 @@ export function buildImproveSummaryMessages(input: {
   ];
 }
 
+const STRUCTURE_SHAPE = [
+  'Output STRICT JSON: {"workExperiences": WorkExperience[], "educations": Education[]}.',
+  'WorkExperience = {jobTitle, company, employmentType?, city?, country?, startMonth?, startYear?, endMonth?, endYear?, currentlyWorking?, bullets?}.',
+  "Education = {institution, degree?, fieldOfStudy?, startYear?, endYear?, currentlyStudying?, description?}.",
+].join("\n");
+
+export function buildStructureSectionsMessages(input: {
+  experienceText?: string;
+  educationText?: string;
+  language: "id" | "en";
+}): ChatMessage[] {
+  const system = [
+    "You restructure resume text the user already provided into JSON. Follow these rules strictly:",
+    "- ONLY restructure text present in the input. This is an extraction task, not writing.",
+    "- DO NOT invent employers, job titles, dates, numbers, bullets, degrees, institutions, or fields of study.",
+    "- If a field is not clearly present in the text, OMIT it entirely (do not guess or use placeholders).",
+    "- Preserve the original wording of bullets. You may lightly normalize whitespace only; no embellishment or added metrics.",
+    "- Include dates only when explicitly stated in the text.",
+    '- Set currentlyWorking/currentlyStudying to true ONLY if the text says "present", "current", or "sekarang".',
+    "- Never infer or mention protected attributes (age, gender, race, religion, nationality, health, disability, marital status).",
+    `- Respond in ${input.language === "id" ? "Indonesian" : "English"} where wording is generated (labels only; keep the user's own words verbatim).`,
+    "- Return STRICTLY a single JSON object. No prose, no markdown outside the JSON.",
+    STRUCTURE_SHAPE,
+  ].join("\n");
+  const parts = [
+    input.experienceText ? `Experience text:\n${input.experienceText}` : "",
+    input.educationText ? `Education text:\n${input.educationText}` : "",
+  ].filter(Boolean);
+  return [
+    { role: "system", content: system },
+    { role: "user", content: parts.join("\n\n") },
+  ];
+}
+
 export function buildSuggestSkillsMessages(input: {
   existingSkills: string[];
   roleHint?: string;

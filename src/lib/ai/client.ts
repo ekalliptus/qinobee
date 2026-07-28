@@ -45,6 +45,29 @@ export function parseSuggestion(raw: string): ParseResult<Suggestion> {
   return { ok: false, error: "invalid suggestion payload" };
 }
 
+/**
+ * Parse raw model output into a plain object. Tolerates prose/markdown fences
+ * by extracting the first balanced {...} block. Returns null instead of
+ * throwing on any failure. Callers validate the shape with zod.
+ */
+export function parseJsonObject(raw: string): unknown | null {
+  const tryParse = (s: string): unknown | null => {
+    try {
+      return JSON.parse(s);
+    } catch {
+      return null;
+    }
+  };
+  const direct = tryParse(raw);
+  if (direct && typeof direct === "object") return direct;
+  const block = extractJsonBlock(raw);
+  if (block) {
+    const parsed = tryParse(block);
+    if (parsed && typeof parsed === "object") return parsed;
+  }
+  return null;
+}
+
 export interface CallChatCompletionOptions {
   baseUrl: string;
   apiKey: string;
