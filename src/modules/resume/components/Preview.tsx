@@ -1,5 +1,5 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
+import { FileText, Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 import type { ResumeDocument } from "@modules/resume/types";
 import { getTemplate } from "@modules/resume/templates/registry";
 import { pageBreakInfo, pxToMm } from "@modules/resume/utils/page-break";
@@ -133,13 +133,16 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
         className="no-print flex min-h-[24px] items-center gap-1 text-sm font-medium"
       >
         {info ? (
-          info.overflow ? (
+          info.pages > 2 ? (
             <span className="flex items-center gap-1 text-[var(--color-ink)]">
-              <AlertTriangle size={16} aria-hidden="true" />
-              Content exceeds one page ({info.pages} pages)
+              <FileText size={16} aria-hidden="true" />
+              {info.pages} pages — consider trimming for a concise CV
             </span>
           ) : (
-            <span>Page count: {info.pages}</span>
+            <span className="flex items-center gap-1 text-[var(--color-ink)] opacity-70">
+              <FileText size={16} aria-hidden="true" />
+              {info.pages} {info.pages === 1 ? "page" : "pages"}
+            </span>
           )
         ) : null}
       </div>

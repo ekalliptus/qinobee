@@ -48,6 +48,42 @@ export const structuredEducationSchema = z.object({
 });
 export type StructuredEducation = z.infer<typeof structuredEducationSchema>;
 
+// ---- Full-text résumé extraction (extract-only) --------------------------
+// Comprehensive but lenient: coerce numbers, tolerate unknown keys. The
+// service validates each mapped entity against the REAL schemas and drops
+// anything invalid; nothing here is fabricated.
+
+export const extractedProjectSchema = z.object({
+  name: z.string().min(1).max(160),
+  role: z.string().max(120).optional(),
+  description: z.string().max(2000).optional(),
+  technologies: z.array(z.string().max(60)).max(40).optional(),
+  url: z.string().max(300).optional(),
+});
+export type ExtractedProject = z.infer<typeof extractedProjectSchema>;
+
+export const extractedResumeSchema = z
+  .object({
+    firstName: z.string().max(80).optional(),
+    lastName: z.string().max(80).optional(),
+    headline: z.string().max(160).optional(),
+    email: z.string().max(160).optional(),
+    phone: z.string().max(40).optional(),
+    city: z.string().max(120).optional(),
+    country: z.string().max(80).optional(),
+    links: z
+      .array(z.object({ type: z.string().max(20).optional(), url: z.string().max(300) }))
+      .max(20)
+      .optional(),
+    professionalSummary: z.string().max(3000).optional(),
+    skills: z.array(z.string().max(60)).max(80).optional(),
+    workExperiences: z.array(structuredExperienceSchema).max(30).optional(),
+    educations: z.array(structuredEducationSchema).max(30).optional(),
+    projects: z.array(extractedProjectSchema).max(30).optional(),
+  })
+  .passthrough();
+export type ExtractedResume = z.infer<typeof extractedResumeSchema>;
+
 export const structureResponseSchema = z.object({
   workExperiences: z.array(structuredExperienceSchema).max(30).default([]),
   educations: z.array(structuredEducationSchema).max(30).default([]),

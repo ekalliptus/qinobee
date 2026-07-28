@@ -34,6 +34,16 @@ const EDU: Education = {
   achievements: [],
 };
 
+type ExtractResult = Awaited<ReturnType<AiService["extractResume"]>>;
+
+const EMPTY_EXTRACT: ExtractResult = {
+  skills: [],
+  workExperiences: [],
+  educations: [],
+  projects: [],
+  source: "fallback",
+};
+
 function stubAi(result: {
   workExperiences: WorkExperience[];
   educations: Education[];
@@ -48,6 +58,29 @@ function stubAi(result: {
       throw new Error("not used");
     },
     structureSections: async () => result,
+    // Import flow now calls extractResume; map structureSections shape onto it.
+    extractResume: async () => ({
+      skills: [],
+      projects: [],
+      workExperiences: result.workExperiences,
+      educations: result.educations,
+      source: result.source,
+    }),
+  } as AiService;
+}
+
+function stubExtract(extract: Partial<ExtractResult>): AiService {
+  const result: ExtractResult = { ...EMPTY_EXTRACT, ...extract };
+  return {
+    enabled: true,
+    improveBullet: async () => ({ suggestion: "", changes: [], source: "fallback" }),
+    improveSummary: async () => ({ suggestion: "", changes: [], source: "fallback" }),
+    suggestSkills: async () => ({ skills: [], source: "fallback" }),
+    analyseJobMatch: async () => {
+      throw new Error("not used");
+    },
+    structureSections: async () => ({ workExperiences: [], educations: [], source: "fallback" as const }),
+    extractResume: async () => result,
   } as AiService;
 }
 
@@ -127,4 +160,67 @@ test("useAi with only experiences structured → keeps education custom section 
   const titles = doc.customSections.map((s) => s.title);
   expect(titles).not.toContain("Imported: Experience");
   expect(titles).toContain("Imported: Education");
+});
+
+test("useAi with rich extractResume → all fields populated, no Imported custom sections, aiStructured", async () => {
+  const db = await seededDb();
+  const stub = stubExtract({
+    personalInformation: {
+      firstName: "Grace",
+      lastName: "Hopper",
+      email: "grace@navy.mil",
+      city: "Arlington",
+      links: [{ type: "linkedin", url: "https://linkedin.com/in/grace" }],
+    },
+    professionalSummary: "Pioneering computer scientist and Navy rear admiral.",
+    skills: ["COBOL", "Compilers", "Leadership"],
+    workExperiences: [WE],
+    educations: [EDU],
+    projects: [
+      { name: "A-0 Compiler", role: "Creator", projectUrl: "https://example.com/a0", technologies: ["assembly"], description: "First compiler." },
+    ],
+    source: "ai",
+  });
+  const { id, aiStructured } = await importResume(db, "u1", {
+    text: SAMPLE,
+    useAi: true,
+    aiService: stub,
+  });
+  expect(aiStructured).toBe(true);
+  const doc = await loadDoc(db, id);
+  expect(doc.personalInformation.email).toBe("grace@navy.mil");
+  expect(doc.personalInformation.firstName).toBe("Grace");
+  expect(doc.professionalSummary).toBe("Pioneering computer scientist and Navy rear admiral.");
+  const skillsGroup = doc.skillGroups.find((g) => g.skills.includes("COBOL"));
+  expect(skillsGroup).toBeDefined();
+  expect(doc.workExperiences.length).toBe(1);
+  expect(doc.educations.length).toBe(1);
+  expect(doc.projects.length).toBe(1);
+  expect(doc.projects[0]!.name).toBe("A-0 Compiler");
+  const titles = doc.customSections.map((s) => s.title);
+  expect(titles).not.toContain("Imported: Experience");
+  expect(titles).not.toContain("Imported: Education");
+});
+
+test("useAi where AI omits summary → heuristic summary fills the gap", async () => {
+  const db = await seededDb();
+  const withSummary = `Ada Lovelace
+Software Engineer
+ada@example.com
+
+Summary
+Seasoned engineer who ships.
+
+Experience
+Engineer, Analytical Co (2020 - Present)
+`;
+  const stub = stubExtract({ workExperiences: [WE], source: "ai" });
+  const { id } = await importResume(db, "u1", {
+    text: withSummary,
+    useAi: true,
+    aiService: stub,
+  });
+  const doc = await loadDoc(db, id);
+  // AI gave no summary; heuristic parsed one from the Summary section.
+  expect(doc.professionalSummary).toBe("Seasoned engineer who ships.");
 });

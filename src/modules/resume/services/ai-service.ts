@@ -1,18 +1,33 @@
-import type { ResumeDocument, WorkExperience, Education } from "@modules/resume/types";
+import type {
+  ResumeDocument,
+  WorkExperience,
+  Education,
+  Project,
+  PersonalInformation,
+  Link,
+} from "@modules/resume/types";
 import type { JobMatchResult } from "@modules/resume/matcher/types";
 import { matchJob } from "@modules/resume/matcher/matcher";
 import { hasActionVerb } from "@modules/resume/utils/empty";
-import { workExperienceSchema, educationSchema } from "@modules/resume/schemas";
+import {
+  workExperienceSchema,
+  educationSchema,
+  projectSchema,
+} from "@modules/resume/schemas";
+import { httpUrl } from "@lib/validation/primitives";
 import {
   buildImproveBulletMessages,
   buildImproveSummaryMessages,
   buildSuggestSkillsMessages,
   buildStructureSectionsMessages,
+  buildExtractResumeMessages,
 } from "@lib/ai/prompts";
 import { callChatCompletion, parseSuggestion, parseJsonObject } from "@lib/ai/client";
 import {
   structuredExperienceSchema,
   structuredEducationSchema,
+  extractedResumeSchema,
+  extractedProjectSchema,
   type StructuredExperience,
   type StructuredEducation,
 } from "@lib/ai/types";
@@ -23,8 +38,15 @@ import type {
 } from "@lib/ai/types";
 
 const MAX_INPUT = 6000;
+// Full-CV extraction sends far more text than section structuring; bound it
+// generously (upstream already caps the request body at 100k chars).
+const MAX_EXTRACT_INPUT = 100000;
 const MIN_SUMMARY_LEN = 120;
 const MAX_SUMMARY_LEN = 600;
+const MAX_SKILLS = 50;
+// Permissive email shape — good enough to reject obvious non-emails without
+// rejecting valid addresses. The seed schema's z.email() is the real gate.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface AiServiceOptions {
   apiKey?: string;
@@ -65,6 +87,20 @@ export interface StructureSectionsResult {
   source: "ai" | "fallback";
 }
 
+export interface ExtractResumeInput {
+  text: string;
+  language: "id" | "en";
+}
+export interface ExtractResumeResult {
+  personalInformation?: Partial<PersonalInformation>;
+  professionalSummary?: string;
+  skills: string[];
+  workExperiences: WorkExperience[];
+  educations: Education[];
+  projects: Project[];
+  source: "ai" | "fallback";
+}
+
 export interface AiService {
   readonly enabled: boolean;
   improveBullet(input: ImproveBulletInput): Promise<SuggestionResult>;
@@ -72,6 +108,7 @@ export interface AiService {
   suggestSkills(input: SuggestSkillsInput): Promise<SkillSuggestionsResult>;
   analyseJobMatch(input: AnalyseJobMatchInput): Promise<JobMatchAiResult>;
   structureSections(input: StructureSectionsInput): Promise<StructureSectionsResult>;
+  extractResume(input: ExtractResumeInput): Promise<ExtractResumeResult>;
 }
 
 function trimInput(text: string): string {
@@ -204,6 +241,93 @@ function mapEducation(item: StructuredEducation): Education | null {
   return parsed.success ? parsed.data : null;
 }
 
+// Projects require only a name (content). url -> projectUrl only if it is a
+// valid http(s) URL; technologies default to []. Nothing is fabricated.
+function mapProject(item: {
+  name: string;
+  role?: string;
+  description?: string;
+  technologies?: string[];
+  url?: string;
+}): Project | null {
+  const candidate: Record<string, unknown> = {
+    name: item.name,
+    technologies: item.technologies ?? [],
+  };
+  if (item.role) candidate.role = item.role;
+  if (item.description) candidate.description = item.description;
+  if (item.url) {
+    const u = httpUrl.safeParse(item.url);
+    if (u.success) candidate.projectUrl = u.data;
+  }
+  const parsed = projectSchema.safeParse(candidate);
+  return parsed.success ? parsed.data : null;
+}
+
+// Classify a link URL by host to the schema's link-type enum, dropping any URL
+// that is not a valid http(s) URL. Never invents a link.
+function classifyLinkHost(url: string): Link["type"] {
+  let host = "";
+  try {
+    host = new URL(url).host.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "website";
+  }
+  if (host === "linkedin.com") return "linkedin";
+  if (host === "github.com") return "github";
+  if (host === "behance.net") return "behance";
+  if (host === "dribbble.com") return "dribbble";
+  return "website";
+}
+
+function mapLinks(raw?: Array<{ type?: string; url: string }>): Link[] {
+  if (!raw) return [];
+  const out: Link[] = [];
+  const seen = new Set<string>();
+  for (const l of raw) {
+    const u = httpUrl.safeParse(l.url);
+    if (!u.success) continue;
+    if (seen.has(u.data)) continue;
+    seen.add(u.data);
+    out.push({ type: classifyLinkHost(u.data), url: u.data });
+  }
+  return out;
+}
+
+function dedupeSkills(raw?: string[]): string[] {
+  if (!raw) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const s of raw) {
+    const token = s.trim();
+    if (!token) continue;
+    const key = token.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(token);
+    if (out.length >= MAX_SKILLS) break;
+  }
+  return out;
+}
+
+// Build a Partial<PersonalInformation> from only the present, valid fields.
+// email is included only if it looks like an email; links validated via httpUrl.
+function mapPersonalInformation(
+  data: import("@lib/ai/types").ExtractedResume,
+): Partial<PersonalInformation> | undefined {
+  const pi: Partial<PersonalInformation> = {};
+  if (data.firstName?.trim()) pi.firstName = data.firstName.trim();
+  if (data.lastName?.trim()) pi.lastName = data.lastName.trim();
+  if (data.headline?.trim()) pi.headline = data.headline.trim().slice(0, 160);
+  if (data.email && EMAIL_RE.test(data.email.trim())) pi.email = data.email.trim();
+  if (data.phone?.trim()) pi.phone = data.phone.trim().slice(0, 40);
+  if (data.city?.trim()) pi.city = data.city.trim().slice(0, 120);
+  if (data.country?.trim()) pi.country = data.country.trim().slice(0, 80);
+  const links = mapLinks(data.links);
+  if (links.length > 0) pi.links = links;
+  return Object.keys(pi).length > 0 ? pi : undefined;
+}
+
 export function createAiService(opts: AiServiceOptions = {}): AiService {
   const apiKey = opts.apiKey ?? "";
   const baseUrl = opts.baseUrl ?? "https://router.ekalliptus.com/v1";
@@ -297,6 +421,84 @@ export function createAiService(opts: AiServiceOptions = {}): AiService {
           }
         }
         return { workExperiences, educations, source: "ai" };
+      } catch {
+        return empty;
+      }
+    },
+
+    async extractResume(input) {
+      const empty: ExtractResumeResult = {
+        skills: [],
+        workExperiences: [],
+        educations: [],
+        projects: [],
+        source: "fallback",
+      };
+      const text =
+        input.text.length > MAX_EXTRACT_INPUT
+          ? input.text.slice(0, MAX_EXTRACT_INPUT)
+          : input.text;
+      if (!enabled) return empty;
+      if (!text.trim()) return empty;
+      try {
+        const content = await complete(
+          buildExtractResumeMessages({ text, language: input.language }),
+        );
+        const obj = parseJsonObject(content);
+        if (!obj || typeof obj !== "object") return empty;
+        // Validate scalar/link/skill fields as a group; arrays are parsed
+        // element-by-element below so ONE malformed item never discards the
+        // whole extraction (drop-invalid, not fail-all).
+        const scalar = extractedResumeSchema
+          .omit({ workExperiences: true, educations: true, projects: true })
+          .safeParse(obj);
+        if (!scalar.success) return empty;
+        const data = scalar.data;
+        const rec = obj as Record<string, unknown>;
+
+        const workExperiences: WorkExperience[] = [];
+        const rawExp = rec.workExperiences;
+        if (Array.isArray(rawExp)) {
+          for (const raw of rawExp.slice(0, 30)) {
+            const s = structuredExperienceSchema.safeParse(raw);
+            if (!s.success) continue;
+            const mapped = mapExperience(s.data);
+            if (mapped) workExperiences.push(mapped);
+          }
+        }
+        const educations: Education[] = [];
+        const rawEdu = rec.educations;
+        if (Array.isArray(rawEdu)) {
+          for (const raw of rawEdu.slice(0, 30)) {
+            const s = structuredEducationSchema.safeParse(raw);
+            if (!s.success) continue;
+            const mapped = mapEducation(s.data);
+            if (mapped) educations.push(mapped);
+          }
+        }
+        const projects: Project[] = [];
+        const rawProj = rec.projects;
+        if (Array.isArray(rawProj)) {
+          for (const raw of rawProj.slice(0, 30)) {
+            const s = extractedProjectSchema.safeParse(raw);
+            if (!s.success) continue;
+            const mapped = mapProject(s.data);
+            if (mapped) projects.push(mapped);
+          }
+        }
+
+        const result: ExtractResumeResult = {
+          skills: dedupeSkills(data.skills),
+          workExperiences,
+          educations,
+          projects,
+          source: "ai",
+        };
+        const personalInformation = mapPersonalInformation(data);
+        if (personalInformation) result.personalInformation = personalInformation;
+        if (data.professionalSummary?.trim())
+          result.professionalSummary = data.professionalSummary.trim().slice(0, 3000);
+        return result;
       } catch {
         return empty;
       }

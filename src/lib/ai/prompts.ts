@@ -93,6 +93,39 @@ export function buildStructureSectionsMessages(input: {
   ];
 }
 
+const EXTRACT_SHAPE = [
+  "Output STRICT JSON with these optional top-level keys:",
+  "{firstName, lastName, headline, email, phone, city, country, links, professionalSummary, skills, workExperiences, educations, projects}.",
+  "links = [{type?, url}]. skills = string[].",
+  "workExperiences = [{jobTitle, company, employmentType?, city?, country?, startMonth?, startYear?, endMonth?, endYear?, currentlyWorking?, bullets?}].",
+  "educations = [{institution, degree?, fieldOfStudy?, startYear?, endYear?, currentlyStudying?, description?}].",
+  "projects = [{name, role?, description?, technologies?, url?}].",
+].join("\n");
+
+export function buildExtractResumeMessages(input: {
+  text: string;
+  language: "id" | "en";
+}): ChatMessage[] {
+  const system = [
+    "You extract a résumé from raw text into JSON. Follow these rules strictly:",
+    "- This is EXTRACTION, not writing. Extract ONLY what is present in the text.",
+    "- DO NOT invent employers, job titles, dates, numbers, skills, degrees, institutions, projects, or contact info.",
+    "- If a field is not clearly present, OMIT it entirely (no guesses, no placeholders).",
+    "- Preserve the candidate's original wording; light whitespace cleanup only. No embellishment or added metrics.",
+    "- Include dates only when explicitly stated in the text.",
+    '- Set currentlyWorking/currentlyStudying to true ONLY if the text says "present", "current", or "sekarang".',
+    "- The input may be a messy or multi-column PDF extraction: reconstruct a sensible reading order, but NEVER fabricate.",
+    "- Never infer or mention protected attributes (age, gender, race, religion, nationality, health, disability, marital status).",
+    `- Respond in ${input.language === "id" ? "Indonesian" : "English"} where wording is generated (labels only; keep the user's own words verbatim).`,
+    "- Return STRICTLY a single JSON object. No prose, no markdown outside the JSON.",
+    EXTRACT_SHAPE,
+  ].join("\n");
+  return [
+    { role: "system", content: system },
+    { role: "user", content: `Résumé text:\n${input.text}` },
+  ];
+}
+
 export function buildSuggestSkillsMessages(input: {
   existingSkills: string[];
   roleHint?: string;
