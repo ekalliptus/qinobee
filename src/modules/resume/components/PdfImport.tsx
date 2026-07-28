@@ -1,5 +1,6 @@
 import { useCallback, useId, useRef, useState } from "react";
 import { features } from "@/config/features";
+import { orderPageText } from "@modules/resume/import/order-text-items";
 
 /**
  * I3 — In-browser PDF text extraction island.
@@ -95,16 +96,20 @@ export default function PdfImport() {
         setProgress(`Reading page ${p} of ${pageCount}…`);
         const page = await doc.getPage(p);
         const content = await page.getTextContent();
-        const line = content.items
-          .map((it) => ("str" in it ? it.str : ""))
-          .filter(Boolean)
-          .join(" ");
-        parts.push(line);
+        const viewport = page.getViewport({ scale: 1 });
+        // pdf.js items are `TextItem | TextMarkedContent`; only TextItem has
+        // `str`/`transform`. Map the former to positioned items for ordering.
+        const items = content.items.flatMap((it) =>
+          "str" in it
+            ? [{ str: it.str, x: it.transform[4], y: it.transform[5], width: it.width ?? 0 }]
+            : []
+        );
+        parts.push(orderPageText(items, { pageWidth: viewport.width }));
         page.cleanup();
       }
       await loadingTask.destroy();
 
-      let extracted = parts.join("\n").replace(/[ \t]+\n/g, "\n").trim();
+      let extracted = parts.join("\n\n").replace(/[ \t]+\n/g, "\n").trim();
       let didTruncate = false;
       if (extracted.length > MAX_TEXT_CHARS) {
         extracted = extracted.slice(0, MAX_TEXT_CHARS);
