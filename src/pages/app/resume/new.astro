@@ -7,6 +7,7 @@ import { getSqlDb } from "@lib/db/client";
 import { createResumeService } from "@modules/resume/services/resume-service";
 import { listTemplates } from "@modules/resume/templates/registry";
 import { features } from "@/config/features";
+import PdfImport from "@modules/resume/components/PdfImport";
 
 export const prerender = false;
 
@@ -94,9 +95,14 @@ const fieldClass =
                 {/* I3: mount the client PDF-import island here. It extracts text in the
                     browser and POSTs JSON to /api/resume/import, then navigates to the
                     editor. Keep the id="pdf-import-slot" hook stable. */}
-                <div id="pdf-import-slot" class="mt-2 text-sm text-[var(--color-ink)] opacity-70">
-                  PDF upload is coming online. Choose a template and language above, then
-                  drop your PDF here once the importer loads.
+                <div id="pdf-import-slot">
+                  <PdfImport client:visible />
+                  <noscript>
+                    <p class="mt-2 text-sm text-[var(--color-ink)] opacity-70">
+                      PDF import needs JavaScript to read your file in the browser. Enable
+                      JavaScript, or start from scratch below.
+                    </p>
+                  </noscript>
                 </div>
               </li>
             ) : (
