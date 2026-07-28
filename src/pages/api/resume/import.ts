@@ -8,8 +8,9 @@ import { importResume } from "@modules/resume/import/build-import-input";
 
 export const prerender = false;
 
-// CV text can be large (multi-page PDFs); cap the whole body at 200 KiB.
-const MAX_BODY = 200 * 1024;
+// CV text is bounded to 100k chars by Zod; allow headroom for multibyte UTF-8
+// (up to ~4 bytes/char) + JSON overhead so non-ASCII CVs aren't rejected early.
+const MAX_BODY = 512 * 1024;
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 function json(body: unknown, status: number): Response {
