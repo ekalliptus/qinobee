@@ -1,6 +1,8 @@
 import { useCallback, useId, useRef, useState } from "react";
 import { features } from "@/config/features";
 import { orderPageText } from "@modules/resume/import/order-text-items";
+import { isLikelyScanned } from "@modules/resume/import/scanned";
+import type { PDFDocumentProxy } from "pdfjs-dist";
 
 /**
  * I3 — In-browser PDF text extraction island.
@@ -18,8 +20,18 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
 const MAX_PAGES = 15;
 const MAX_TEXT_CHARS = 100_000;
 const PREVIEW_CHARS = 500;
+// OCR fallback is slow; cap pages and use 2x scale for legible glyphs.
+const MAX_OCR_PAGES = 5;
+const OCR_SCALE = 2;
 
-type Phase = "idle" | "reading" | "ready" | "submitting" | "awaiting-consent" | "error";
+type Phase =
+  | "idle"
+  | "reading"
+  | "ocr"
+  | "ready"
+  | "submitting"
+  | "awaiting-consent"
+  | "error";
 
 const NEO_INPUT =
   "neo-input min-h-[44px] w-full border-2 px-3";
@@ -29,6 +41,42 @@ const INK = { borderColor: "var(--color-ink)", color: "var(--color-ink)" } as co
 
 function stripExt(name: string): string {
   return name.replace(/\.[^.]+$/, "").trim() || "Imported CV";
+}
+
+/**
+ * In-browser OCR fallback for scanned PDFs. Renders each page to a canvas with
+ * pdf.js, then recognizes text with a lazily-loaded tesseract.js worker (v7:
+ * `createWorker(lang)` returns a ready worker). The page image never leaves the
+ * device; only the wasm/model files are fetched from tesseract's CDN.
+ */
+async function runOcr(
+  doc: PDFDocumentProxy,
+  pageCount: number,
+  language: "id" | "en",
+  setProgress: (s: string) => void
+): Promise<string> {
+  const { createWorker } = await import("tesseract.js");
+  const lang = language === "id" ? "ind" : "eng";
+  const worker = await createWorker(lang);
+  const n = Math.min(pageCount, MAX_OCR_PAGES);
+  const parts: string[] = [];
+  try {
+    for (let p = 1; p <= n; p++) {
+      setProgress(`OCR page ${p} of ${n}…`);
+      const page = await doc.getPage(p);
+      const viewport = page.getViewport({ scale: OCR_SCALE });
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvas, viewport }).promise;
+      const { data } = await worker.recognize(canvas);
+      parts.push(data.text);
+      page.cleanup();
+    }
+  } finally {
+    await worker.terminate();
+  }
+  return parts.join("\n\n").replace(/[ \t]+\n/g, "\n").trim();
 }
 
 export default function PdfImport() {
@@ -107,9 +155,41 @@ export default function PdfImport() {
         parts.push(orderPageText(items, { pageWidth: viewport.width }));
         page.cleanup();
       }
-      await loadingTask.destroy();
 
       let extracted = parts.join("\n\n").replace(/[ \t]+\n/g, "\n").trim();
+
+      // Scanned/image-only PDFs yield little/no text: fall back to in-browser
+      // OCR. tesseract.js is lazy-loaded here so normal imports never pull it.
+      if (isLikelyScanned(extracted, pageCount)) {
+        setPhase("ocr");
+        setProgress(
+          "No selectable text found — running OCR on the scanned PDF. This can " +
+            "take a while and downloads a language model the first time."
+        );
+        try {
+          extracted = await runOcr(doc, pageCount, language, setProgress);
+        } catch {
+          await loadingTask.destroy();
+          setPhase("error");
+          setError(
+            "OCR failed on this PDF. It may be an unsupported image, or the " +
+              "language model couldn't be downloaded. Please try another file."
+          );
+          return;
+        }
+        if (isLikelyScanned(extracted, pageCount)) {
+          await loadingTask.destroy();
+          setPhase("error");
+          setError(
+            "Could not read text from this PDF (it may be an image with no " +
+              "recognizable text). Please try another file."
+          );
+          return;
+        }
+      }
+
+      await loadingTask.destroy();
+
       let didTruncate = false;
       if (extracted.length > MAX_TEXT_CHARS) {
         extracted = extracted.slice(0, MAX_TEXT_CHARS);
@@ -136,7 +216,7 @@ export default function PdfImport() {
       setPhase("error");
       setError("We couldn't read that PDF. It may be corrupted or password-protected.");
     }
-  }, []);
+  }, [language]);
 
   const onFile = useCallback(
     (files: FileList | null) => {
@@ -270,8 +350,8 @@ export default function PdfImport() {
     void doImport(false);
   }, [doImport]);
 
-  const busy = phase === "reading" || phase === "submitting";
-  const locked = phase === "submitting" || phase === "awaiting-consent";
+  const busy = phase === "reading" || phase === "ocr" || phase === "submitting";
+  const locked = phase === "ocr" || phase === "submitting" || phase === "awaiting-consent";
 
   return (
     <div className="mt-2 flex flex-col gap-3" style={{ color: "var(--color-ink)" }}>
@@ -280,6 +360,11 @@ export default function PdfImport() {
         never leaves your device. Only the extracted text is sent to create a draft you can
         review and edit. With AI structuring off, that text stays on our server only; with AI on,
         the extracted text is also sent to the AI provider. Parsing isn&apos;t perfect.
+      </p>
+      <p className="text-xs opacity-70">
+        If a PDF has no selectable text (a scan or image), we run OCR right here in your browser to
+        read it. The image stays on your device — only the OCR language model is downloaded (from a
+        CDN) the first time.
       </p>
 
       {/* Drop zone + keyboard-accessible picker trigger */}
