@@ -116,7 +116,7 @@ export function createAiService(opts: AiServiceOptions = {}): AiService {
   const baseUrl = opts.baseUrl ?? "https://router.ekalliptus.com/v1";
   const model = opts.model ?? "gaskeun";
   const fetchImpl = opts.fetchImpl;
-  const timeoutMs = opts.timeoutMs;
+  const timeoutMs = opts.timeoutMs ?? 25000;
   const enabled = !!apiKey;
 
   async function complete(messages: Parameters<typeof callChatCompletion>[0]["messages"]) {

@@ -91,7 +91,10 @@ export async function callChatCompletion(
         model,
         messages,
         temperature: 0.4,
-        response_format: { type: "json_object" },
+        // Force a single non-streaming envelope. The router (OpenAI-compatible)
+        // streams SSE by default; without this the body is `data: {chunk}` lines
+        // that res.json() cannot parse. parseSuggestion() strips any ```json fences.
+        stream: false,
       }),
       signal: controller.signal,
     });
