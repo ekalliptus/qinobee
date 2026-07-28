@@ -5,6 +5,7 @@ import Button from "@components/ui/Button.astro";
 import ResumeCard from "@components/app/ResumeCard.astro";
 import { getSqlDb } from "@lib/db/client";
 import { createResumeService } from "@modules/resume/services/resume-service";
+import { features } from "@/config/features";
 
 export const prerender = false;
 
@@ -29,7 +30,13 @@ const resumes = await svc.list(user.id);
         </p>
         <div class="mt-4 flex flex-wrap gap-2">
           <Button href="/app/resume/new" variant="primary" size="sm">Create New CV</Button>
-          <Button variant="secondary" size="sm" disabled>Import Career Profile (Soon)</Button>
+          {
+            features.resumeUpload ? (
+              <Button href="/app/resume/new#import" variant="secondary" size="sm">Import from PDF</Button>
+            ) : (
+              <Button variant="secondary" size="sm" disabled>Import from PDF (Soon)</Button>
+            )
+          }
           <Button variant="secondary" size="sm" disabled>Create Cover Letter (Soon)</Button>
         </div>
       </NeoCard>

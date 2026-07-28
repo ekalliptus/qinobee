@@ -84,13 +84,31 @@ const fieldClass =
             }
           </li>
 
-          <li class="flex items-center justify-between gap-3 border-2 border-[var(--color-ink)] p-3 opacity-60">
-            <div>
-              <p class="font-semibold text-[var(--color-ink)]">Import JSON</p>
-              <p class="text-sm text-[var(--color-ink)]">Upload a resume export file.</p>
-            </div>
-            <Badge>Soon</Badge>
-          </li>
+          {
+            features.resumeUpload ? (
+              <li id="import" class="border-2 border-[var(--color-ink)] p-3">
+                <p class="font-semibold text-[var(--color-ink)]">Import from PDF</p>
+                <p class="text-sm text-[var(--color-ink)] opacity-70">
+                  Upload a CV PDF; we read the text and seed a draft you can review.
+                </p>
+                {/* I3: mount the client PDF-import island here. It extracts text in the
+                    browser and POSTs JSON to /api/resume/import, then navigates to the
+                    editor. Keep the id="pdf-import-slot" hook stable. */}
+                <div id="pdf-import-slot" class="mt-2 text-sm text-[var(--color-ink)] opacity-70">
+                  PDF upload is coming online. Choose a template and language above, then
+                  drop your PDF here once the importer loads.
+                </div>
+              </li>
+            ) : (
+              <li class="flex items-center justify-between gap-3 border-2 border-[var(--color-ink)] p-3 opacity-60">
+                <div>
+                  <p class="font-semibold text-[var(--color-ink)]">Import from PDF</p>
+                  <p class="text-sm text-[var(--color-ink)]">Upload a CV PDF file.</p>
+                </div>
+                <Badge>Soon</Badge>
+              </li>
+            )
+          }
         </ul>
       </fieldset>
     </NeoCard>

@@ -3,7 +3,7 @@ export const features = {
 	publicShare: false,
 	coverLetter: false,
 	versionHistoryUi: false,
-	resumeUpload: false,
+	resumeUpload: true,
 } as const;
 
 export type FeatureFlag = keyof typeof features;
