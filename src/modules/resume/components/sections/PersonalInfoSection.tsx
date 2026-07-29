@@ -25,10 +25,11 @@ export default function PersonalInfoSection(props: { doc: ResumeDocument; update
   const setLinks = (links: Link[]) => set({ links });
 
   return (
-    <section aria-labelledby="sec-personal" className="flex flex-col gap-4">
+    <section aria-labelledby="sec-personal" className="flex flex-col gap-6">
       <h2 id="sec-personal" className="text-xl font-bold">
         Personal information
       </h2>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField label="First name" value={pi.firstName ?? ""} onChange={(v) => set({ firstName: v })} />
         <TextField label="Last name" value={pi.lastName ?? ""} onChange={(v) => set({ lastName: v })} />
@@ -41,39 +42,51 @@ export default function PersonalInfoSection(props: { doc: ResumeDocument; update
 
       <div className="flex flex-col gap-3">
         <h3 className="font-semibold">Links</h3>
-        {pi.links.map((link, i) => (
-          <div key={i} className="flex flex-col gap-2 border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] p-3">
-            <SelectField
-              label="Type"
-              value={link.type}
-              options={LINK_TYPES.map((t) => ({ value: t, label: t }))}
-              onChange={(v) => setLinks(pi.links.map((l, j) => (j === i ? { ...l, type: v as Link["type"] } : l)))}
-            />
-            <TextField
-              label="URL"
-              type="url"
-              value={link.url}
-              error={link.url && !/^https?:\/\//i.test(link.url) ? "Must start with http:// or https://" : undefined}
-              onChange={(v) => setLinks(pi.links.map((l, j) => (j === i ? { ...l, url: v } : l)))}
-            />
-            <TextField
-              label="Label (optional)"
-              value={link.label ?? ""}
-              onChange={(v) => setLinks(pi.links.map((l, j) => (j === i ? { ...l, label: v } : l)))}
-            />
-            <ItemToolbar
-              index={i}
-              length={pi.links.length}
-              label="link"
-              onReorder={(fn) => setLinks(fn(pi.links) as Link[])}
-              onDuplicate={() => setLinks([...pi.links.slice(0, i + 1), { ...link }, ...pi.links.slice(i + 1)])}
-              onDelete={() => setLinks(pi.links.filter((_, j) => j !== i))}
-            />
-          </div>
-        ))}
+        <div className="flex flex-col gap-4">
+          {pi.links.map((link, i) => (
+            <div
+              key={i}
+              className="flex flex-col gap-3 border-2 border-[var(--color-ink)] rounded-[var(--radius)] p-4 bg-[var(--color-white)]"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold capitalize text-[var(--color-ink)]" aria-hidden="true">
+                  {link.label || link.type}
+                </span>
+                <ItemToolbar
+                  index={i}
+                  length={pi.links.length}
+                  label="link"
+                  onReorder={(fn) => setLinks(fn(pi.links) as Link[])}
+                  onDuplicate={() => setLinks([...pi.links.slice(0, i + 1), { ...link }, ...pi.links.slice(i + 1)])}
+                  onDelete={() => setLinks(pi.links.filter((_, j) => j !== i))}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SelectField
+                  label="Type"
+                  value={link.type}
+                  options={LINK_TYPES.map((t) => ({ value: t, label: t }))}
+                  onChange={(v) => setLinks(pi.links.map((l, j) => (j === i ? { ...l, type: v as Link["type"] } : l)))}
+                />
+                <TextField
+                  label="Label (optional)"
+                  value={link.label ?? ""}
+                  onChange={(v) => setLinks(pi.links.map((l, j) => (j === i ? { ...l, label: v } : l)))}
+                />
+              </div>
+              <TextField
+                label="URL"
+                type="url"
+                value={link.url}
+                error={link.url && !/^https?:\/\//i.test(link.url) ? "Must start with http:// or https://" : undefined}
+                onChange={(v) => setLinks(pi.links.map((l, j) => (j === i ? { ...l, url: v } : l)))}
+              />
+            </div>
+          ))}
+        </div>
         <button
           type="button"
-          className={BTN}
+          className={`${BTN} mt-2`}
           onClick={() => setLinks([...pi.links, { type: "website", url: "" } as Link])}
         >
           Add link

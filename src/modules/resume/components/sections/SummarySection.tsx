@@ -21,7 +21,7 @@ export default function SummarySection(props: {
       : `${len} characters (recommended ${MIN}–${MAX}).`;
 
   return (
-    <section aria-labelledby="sec-summary" className="flex flex-col gap-4">
+    <section aria-labelledby="sec-summary" className="flex flex-col gap-6">
       <h2 id="sec-summary" className="text-xl font-bold">
         Professional summary
       </h2>
