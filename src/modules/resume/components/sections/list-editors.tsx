@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { moveUp, moveDown, moveToTop, moveToBottom } from "@modules/resume/utils/reorder";
+import { Dialog } from "@components/ui/Dialog";
 
 const BTN = "neo-button min-h-[44px] px-3 text-sm bg-[var(--color-white)] text-[var(--color-ink)]";
 const BTN_DANGER = "neo-button min-h-[44px] px-3 text-sm bg-[var(--color-red)] text-[var(--color-ink)]";
@@ -174,22 +175,36 @@ export function ItemToolbar(props: {
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
   return (
-    <div className="flex flex-wrap gap-2">
-      <ReorderControls index={props.index} length={props.length} label={props.label} onReorder={props.onReorder} />
-      <button type="button" className={BTN} onClick={props.onDuplicate}>
-        Duplicate
-      </button>
-      <button
-        type="button"
-        className={BTN_DANGER}
-        onClick={() => {
-          if (confirm(`Delete this ${props.label}?`)) props.onDelete();
+    <>
+      <div className="flex flex-wrap gap-2">
+        <ReorderControls index={props.index} length={props.length} label={props.label} onReorder={props.onReorder} />
+        <button type="button" className={BTN} onClick={props.onDuplicate}>
+          Duplicate
+        </button>
+        <button
+          type="button"
+          className={BTN_DANGER}
+          onClick={() => setConfirmOpen(true)}
+        >
+          Delete
+        </button>
+      </div>
+      <Dialog
+        open={confirmOpen}
+        title={`Delete this ${props.label}?`}
+        variant="danger"
+        primaryLabel="Delete"
+        onPrimary={() => {
+          setConfirmOpen(false);
+          props.onDelete();
         }}
+        onClose={() => setConfirmOpen(false)}
       >
-        Delete
-      </button>
-    </div>
+        <p>This action cannot be undone.</p>
+      </Dialog>
+    </>
   );
 }
 

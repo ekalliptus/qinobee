@@ -20,63 +20,76 @@ export default function EducationSection(props: { doc: ResumeDocument; update: U
     setItems(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
 
   return (
-    <section aria-labelledby="sec-edu" className="flex flex-col gap-4">
+    <section aria-labelledby="sec-edu" className="flex flex-col gap-6">
       <h2 id="sec-edu" className="text-xl font-bold">
         Education
       </h2>
-      {items.map((it, i) => (
-        <div key={i} className="flex flex-col gap-3 border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] p-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <TextField label="Institution" value={it.institution} onChange={(v) => patchItem(i, { institution: v })} />
-            <TextField label="Degree" value={it.degree ?? ""} onChange={(v) => patchItem(i, { degree: v })} />
-            <TextField label="Field of study" value={it.fieldOfStudy ?? ""} onChange={(v) => patchItem(i, { fieldOfStudy: v })} />
-            <TextField label="Level" value={it.level ?? ""} onChange={(v) => patchItem(i, { level: v })} />
-            <TextField label="City" value={it.city ?? ""} onChange={(v) => patchItem(i, { city: v })} />
-            <TextField label="Country" value={it.country ?? ""} onChange={(v) => patchItem(i, { country: v })} />
-            <TextField
-              label="Start year"
-              type="number"
-              value={it.startYear ? String(it.startYear) : ""}
-              onChange={(v) => patchItem(i, { startYear: v ? Number(v) : undefined })}
-            />
-            <TextField
-              label="End year"
-              type="number"
-              value={it.endYear ? String(it.endYear) : ""}
-              onChange={(v) => patchItem(i, { endYear: v ? Number(v) : undefined })}
-            />
-            <TextField
-              label="GPA"
-              type="number"
-              value={it.gpa != null ? String(it.gpa) : ""}
-              onChange={(v) => patchItem(i, { gpa: v ? Number(v) : undefined })}
-            />
-            <TextField
-              label="Max GPA"
-              type="number"
-              value={it.maxGpa != null ? String(it.maxGpa) : ""}
-              onChange={(v) => patchItem(i, { maxGpa: v ? Number(v) : undefined })}
-            />
-          </div>
-          <CheckboxField
-            label="I currently study here"
-            checked={it.currentlyStudying}
-            onChange={(v) => patchItem(i, { currentlyStudying: v })}
-          />
-          <TextArea label="Activities" rows={2} value={it.activities ?? ""} onChange={(v) => patchItem(i, { activities: v })} />
-          <TextArea label="Description" rows={3} value={it.description ?? ""} onChange={(v) => patchItem(i, { description: v })} />
+      <div className="flex flex-col gap-4">
+        {items.map((it, i) => {
+          const title = it.institution || it.degree ? `${it.institution}${it.degree ? ` · ${it.degree}` : ""}` : `Education ${i + 1}`;
+          return (
+            <div
+              key={i}
+              className="flex flex-col gap-3 border-2 border-[var(--color-ink)] rounded-[var(--radius)] p-4 bg-[var(--color-white)]"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold text-[var(--color-ink)]" aria-hidden="true">
+                  {title}
+                </span>
+                <ItemToolbar
+                  index={i}
+                  length={items.length}
+                  label="education"
+                  onReorder={(fn) => setItems(fn(items) as Education[])}
+                  onDuplicate={() => setItems([...items.slice(0, i + 1), { ...it }, ...items.slice(i + 1)])}
+                  onDelete={() => setItems(items.filter((_, j) => j !== i))}
+                />
+              </div>
 
-          <ItemToolbar
-            index={i}
-            length={items.length}
-            label="education"
-            onReorder={(fn) => setItems(fn(items) as Education[])}
-            onDuplicate={() => setItems([...items.slice(0, i + 1), { ...it }, ...items.slice(i + 1)])}
-            onDelete={() => setItems(items.filter((_, j) => j !== i))}
-          />
-        </div>
-      ))}
-      <button type="button" className={BTN} onClick={() => setItems([...items, emptyEducation()])}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField label="Institution" value={it.institution} onChange={(v) => patchItem(i, { institution: v })} />
+                <TextField label="Degree" value={it.degree ?? ""} onChange={(v) => patchItem(i, { degree: v })} />
+                <TextField label="Field of study" value={it.fieldOfStudy ?? ""} onChange={(v) => patchItem(i, { fieldOfStudy: v })} />
+                <TextField label="Level" value={it.level ?? ""} onChange={(v) => patchItem(i, { level: v })} />
+                <TextField label="City" value={it.city ?? ""} onChange={(v) => patchItem(i, { city: v })} />
+                <TextField label="Country" value={it.country ?? ""} onChange={(v) => patchItem(i, { country: v })} />
+                <TextField
+                  label="Start year"
+                  type="number"
+                  value={it.startYear ? String(it.startYear) : ""}
+                  onChange={(v) => patchItem(i, { startYear: v ? Number(v) : undefined })}
+                />
+                <TextField
+                  label="End year"
+                  type="number"
+                  value={it.endYear ? String(it.endYear) : ""}
+                  onChange={(v) => patchItem(i, { endYear: v ? Number(v) : undefined })}
+                />
+                <TextField
+                  label="GPA"
+                  type="number"
+                  value={it.gpa != null ? String(it.gpa) : ""}
+                  onChange={(v) => patchItem(i, { gpa: v ? Number(v) : undefined })}
+                />
+                <TextField
+                  label="Max GPA"
+                  type="number"
+                  value={it.maxGpa != null ? String(it.maxGpa) : ""}
+                  onChange={(v) => patchItem(i, { maxGpa: v ? Number(v) : undefined })}
+                />
+              </div>
+              <CheckboxField
+                label="I currently study here"
+                checked={it.currentlyStudying}
+                onChange={(v) => patchItem(i, { currentlyStudying: v })}
+              />
+              <TextArea label="Activities" rows={2} value={it.activities ?? ""} onChange={(v) => patchItem(i, { activities: v })} />
+              <TextArea label="Description" rows={3} value={it.description ?? ""} onChange={(v) => patchItem(i, { description: v })} />
+            </div>
+          );
+        })}
+      </div>
+      <button type="button" className={`${BTN} mt-2`} onClick={() => setItems([...items, emptyEducation()])}>
         Add education
       </button>
     </section>

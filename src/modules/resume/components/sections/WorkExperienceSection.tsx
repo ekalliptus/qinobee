@@ -45,85 +45,99 @@ export default function WorkExperienceSection(props: {
     setItems(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
 
   return (
-    <section aria-labelledby="sec-work" className="flex flex-col gap-4">
+    <section aria-labelledby="sec-work" className="flex flex-col gap-6">
       <h2 id="sec-work" className="text-xl font-bold">
         Work experience
       </h2>
-      {items.map((it, i) => (
-        <div key={i} className="flex flex-col gap-3 border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] p-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <TextField label="Job title" value={it.jobTitle} onChange={(v) => patchItem(i, { jobTitle: v })} />
-            <TextField label="Company" value={it.company} onChange={(v) => patchItem(i, { company: v })} />
-            <SelectField
-              label="Employment type"
-              value={it.employmentType}
-              options={EMPLOYMENT_TYPES.map((t) => ({ value: t, label: t }))}
-              onChange={(v) => patchItem(i, { employmentType: v as WorkExperience["employmentType"] })}
-            />
-            <TextField label="City" value={it.city ?? ""} onChange={(v) => patchItem(i, { city: v })} />
-            <TextField label="Country" value={it.country ?? ""} onChange={(v) => patchItem(i, { country: v })} />
-            <CheckboxField label="Remote" checked={it.remote ?? false} onChange={(v) => patchItem(i, { remote: v })} />
-          </div>
+      <div className="flex flex-col gap-4">
+        {items.map((it, i) => {
+          const title =
+            it.jobTitle || it.company ? `${it.jobTitle}${it.company ? ` · ${it.company}` : ""}` : `Experience ${i + 1}`;
+          return (
+            <div
+              key={i}
+              className="flex flex-col gap-3 border-2 border-[var(--color-ink)] rounded-[var(--radius)] p-4 bg-[var(--color-white)]"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold text-[var(--color-ink)]" aria-hidden="true">
+                  {title}
+                </span>
+                <ItemToolbar
+                  index={i}
+                  length={items.length}
+                  label="experience"
+                  onReorder={(fn) => setItems(fn(items) as WorkExperience[])}
+                  onDuplicate={() => setItems([...items.slice(0, i + 1), { ...it }, ...items.slice(i + 1)])}
+                  onDelete={() => setItems(items.filter((_, j) => j !== i))}
+                />
+              </div>
 
-          <div className="grid gap-3 sm:grid-cols-4">
-            <SelectField
-              label="Start month"
-              value={String(it.startMonth)}
-              options={MONTHS}
-              onChange={(v) => patchItem(i, { startMonth: Number(v) })}
-            />
-            <TextField
-              label="Start year"
-              type="number"
-              value={String(it.startYear)}
-              onChange={(v) => patchItem(i, { startYear: Number(v) || it.startYear })}
-            />
-            <SelectField
-              label="End month"
-              value={it.endMonth ? String(it.endMonth) : ""}
-              options={[{ value: "", label: "—" }, ...MONTHS]}
-              onChange={(v) => patchItem(i, { endMonth: v ? Number(v) : undefined })}
-            />
-            <TextField
-              label="End year"
-              type="number"
-              value={it.endYear ? String(it.endYear) : ""}
-              onChange={(v) => patchItem(i, { endYear: v ? Number(v) : undefined })}
-            />
-          </div>
-          <CheckboxField
-            label="I currently work here"
-            checked={it.currentlyWorking}
-            hint={it.currentlyWorking ? "End date is ignored while this is checked." : undefined}
-            onChange={(v) =>
-              patchItem(i, v ? { currentlyWorking: true, endMonth: undefined, endYear: undefined } : { currentlyWorking: false })
-            }
-          />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField label="Job title" value={it.jobTitle} onChange={(v) => patchItem(i, { jobTitle: v })} />
+                <TextField label="Company" value={it.company} onChange={(v) => patchItem(i, { company: v })} />
+                <SelectField
+                  label="Employment type"
+                  value={it.employmentType}
+                  options={EMPLOYMENT_TYPES.map((t) => ({ value: t, label: t }))}
+                  onChange={(v) => patchItem(i, { employmentType: v as WorkExperience["employmentType"] })}
+                />
+                <TextField label="City" value={it.city ?? ""} onChange={(v) => patchItem(i, { city: v })} />
+                <TextField label="Country" value={it.country ?? ""} onChange={(v) => patchItem(i, { country: v })} />
+                <CheckboxField label="Remote" checked={it.remote ?? false} onChange={(v) => patchItem(i, { remote: v })} />
+              </div>
 
-          <BulletList
-            label="Bullets"
-            values={it.bullets}
-            onChange={(bullets) => patchItem(i, { bullets })}
-            renderExtra={
-              props.renderAiAssist
-                ? (value, onApply) =>
-                    props.renderAiAssist!({ kind: "bullet", text: value, onApply })
-                : undefined
-            }
-          />
-          <TagList label="Skills used" values={it.skillsUsed} onChange={(skillsUsed) => patchItem(i, { skillsUsed })} />
+              <div className="grid gap-4 sm:grid-cols-4">
+                <SelectField
+                  label="Start month"
+                  value={String(it.startMonth)}
+                  options={MONTHS}
+                  onChange={(v) => patchItem(i, { startMonth: Number(v) })}
+                />
+                <TextField
+                  label="Start year"
+                  type="number"
+                  value={String(it.startYear)}
+                  onChange={(v) => patchItem(i, { startYear: Number(v) || it.startYear })}
+                />
+                <SelectField
+                  label="End month"
+                  value={it.endMonth ? String(it.endMonth) : ""}
+                  options={[{ value: "", label: "—" }, ...MONTHS]}
+                  onChange={(v) => patchItem(i, { endMonth: v ? Number(v) : undefined })}
+                />
+                <TextField
+                  label="End year"
+                  type="number"
+                  value={it.endYear ? String(it.endYear) : ""}
+                  onChange={(v) => patchItem(i, { endYear: v ? Number(v) : undefined })}
+                />
+              </div>
+              <CheckboxField
+                label="I currently work here"
+                checked={it.currentlyWorking}
+                hint={it.currentlyWorking ? "End date is ignored while this is checked." : undefined}
+                onChange={(v) =>
+                  patchItem(i, v ? { currentlyWorking: true, endMonth: undefined, endYear: undefined } : { currentlyWorking: false })
+                }
+              />
 
-          <ItemToolbar
-            index={i}
-            length={items.length}
-            label="experience"
-            onReorder={(fn) => setItems(fn(items) as WorkExperience[])}
-            onDuplicate={() => setItems([...items.slice(0, i + 1), { ...it }, ...items.slice(i + 1)])}
-            onDelete={() => setItems(items.filter((_, j) => j !== i))}
-          />
-        </div>
-      ))}
-      <button type="button" className={BTN} onClick={() => setItems([...items, emptyExperience()])}>
+              <BulletList
+                label="Bullets"
+                values={it.bullets}
+                onChange={(bullets) => patchItem(i, { bullets })}
+                renderExtra={
+                  props.renderAiAssist
+                    ? (value, onApply) =>
+                        props.renderAiAssist!({ kind: "bullet", text: value, onApply })
+                    : undefined
+                }
+              />
+              <TagList label="Skills used" values={it.skillsUsed} onChange={(skillsUsed) => patchItem(i, { skillsUsed })} />
+            </div>
+          );
+        })}
+      </div>
+      <button type="button" className={`${BTN} mt-2`} onClick={() => setItems([...items, emptyExperience()])}>
         Add experience
       </button>
     </section>
