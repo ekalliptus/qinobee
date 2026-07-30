@@ -6,7 +6,8 @@
   ],
   "exclude": [
     "dist",
-    "worker-configuration.d.ts"
+    "worker-configuration.d.ts",
+    "contoh"
   ],
   "compilerOptions": {
     "strict": true,

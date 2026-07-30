@@ -28,3 +28,6 @@ data/*.sqlite-shm
 
 # wrangler-generated worker types (clobbers DOM lib in React islands; we use local types)
 worker-configuration.d.ts
+
+# Local reference dump (not part of the app)
+contoh/
