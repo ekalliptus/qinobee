@@ -1,5 +1,5 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { FileText, Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
+import { FileText, Maximize2, Minus, Plus } from "lucide-react";
 import type { ResumeDocument } from "@modules/resume/types";
 import { getTemplate } from "@modules/resume/templates/registry";
 import { pageBreakInfo, pxToMm } from "@modules/resume/utils/page-break";
@@ -55,11 +55,13 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
       const px = content.getBoundingClientRect().height / (zoomRef.current || 1);
       setHeightMm(pxToMm(px));
       if (fitRef.current === "width" || fitRef.current === "page") {
-        const availPx = viewport.clientWidth - 24; // padding budget
+        const availPx = viewport.clientWidth - 48; // p-6 padding budget
         const a4wPx = content.getBoundingClientRect().width / (zoomRef.current || 1);
-        let next = availPx / a4wPx;
+        const fitWidthScale = availPx / a4wPx;
+        // Readable floor: computed fit never goes microscopic (manual +/- can).
+        let next = Math.max(fitWidthScale, 0.62);
         if (fitRef.current === "page") {
-          const availH = viewport.clientHeight - 24;
+          const availH = viewport.clientHeight - 48;
           const a4hPx = content.getBoundingClientRect().height / (zoomRef.current || 1);
           next = Math.min(next, availH / a4hPx);
         }
@@ -83,10 +85,8 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
     setFit("none");
     setZoom((z) => clampZoom(z + delta));
   };
-  const reset = () => {
-    setFit("none");
-    setZoom(1);
-  };
+
+  const pages = info?.pages ?? 1;
 
   return (
     <div className={`flex min-w-0 flex-col gap-2 ${className ?? ""}`}>
@@ -103,9 +103,6 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
         </span>
         <button type="button" className={CTRL} aria-label="Zoom in" onClick={() => nudge(ZOOM_STEP)}>
           <Plus size={18} aria-hidden="true" />
-        </button>
-        <button type="button" className={CTRL} aria-label="Reset zoom" onClick={reset}>
-          <RotateCcw size={18} aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -126,33 +123,24 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
           <Maximize2 size={16} aria-hidden="true" className="mr-1" />
           Fit page
         </button>
-      </div>
-
-      <div
-        aria-live="polite"
-        className="no-print flex min-h-[24px] items-center gap-1 text-sm font-medium"
-      >
         {info ? (
-          info.pages > 2 ? (
-            <span className="flex items-center gap-1 text-[var(--color-ink)]">
-              <FileText size={16} aria-hidden="true" />
-              {info.pages} pages — consider trimming for a concise CV
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-[var(--color-ink)] opacity-70">
-              <FileText size={16} aria-hidden="true" />
-              {info.pages} {info.pages === 1 ? "page" : "pages"}
-            </span>
-          )
+          <span
+            aria-live="polite"
+            className="flex items-center gap-1 bg-[var(--color-muted)] border-2 border-[var(--color-ink)] rounded-[var(--radius-sm)] px-2 py-0.5 text-xs font-medium"
+          >
+            <FileText size={14} aria-hidden="true" />
+            {pages} {pages === 1 ? "page" : "pages"}
+          </span>
         ) : null}
       </div>
 
       <div
         ref={viewportRef}
-        className="relative max-h-[70vh] w-full overflow-auto bg-[var(--color-paper)] p-3"
+        className="relative max-h-[70vh] w-full overflow-auto bg-[var(--color-muted)] p-6"
       >
         <div
           style={{
+            position: "relative",
             width: `${A4_WIDTH_MM}mm`,
             transform: `scale(${zoom})`,
             transformOrigin: "top center",
@@ -162,6 +150,24 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
           <div ref={contentRef} className="resume-page">
             <TemplateStage resume={resume} />
           </div>
+          {pages > 1
+            ? Array.from({ length: pages - 1 }, (_, i) => (
+                <div
+                  key={i}
+                  className="no-print"
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: `${(i + 1) * 297}mm`,
+                    borderTop: "1px dashed var(--color-ink)",
+                    opacity: 0.35,
+                    pointerEvents: "none",
+                  }}
+                />
+              ))
+            : null}
         </div>
       </div>
     </div>

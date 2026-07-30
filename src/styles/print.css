@@ -3,9 +3,10 @@
 .resume-page {
   width: 210mm;
   min-height: 297mm;
-  background: white;
+  background: #ffffff;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-ink);
   margin: 0 auto;
-  box-shadow: 8px 8px 0 0 var(--color-ink, #111);
 }
 
 @page {
@@ -20,6 +21,7 @@
 
   .resume-page {
     box-shadow: none;
+    border: none;
     margin: 0;
   }
 }
