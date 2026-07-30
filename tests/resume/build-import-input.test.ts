@@ -47,18 +47,29 @@ test("empty parsed → minimal patch, no fabricated skills/experience", () => {
   expect(patch.personalInformation).toBeUndefined();
 });
 
-test("raw experience/education preserved as custom sections (not fake structured entries)", () => {
+test("dated experience/education are structured (P2), not dumped into custom sections", () => {
   const parsed: ParsedResume = {
     ...empty(),
     experienceText: "Engineer, Analytical Co (2020 - Present)",
     educationText: "BSc Computer Science, Uni (2016 - 2020)",
   };
   const { patch } = parsedToResumeSeed(parsed, OPTS);
+  expect(patch.workExperiences?.[0]?.jobTitle).toBe("Engineer");
+  expect(patch.workExperiences?.[0]?.company).toBe("Analytical Co");
+  expect(patch.educations?.[0]?.institution).toBe("Uni");
+  const titles = patch.customSections?.map((s) => s.title) ?? [];
+  expect(titles).not.toContain("Imported: Experience");
+  expect(titles).not.toContain("Imported: Education");
+});
+
+test("undated experience with no parseable block falls back to a raw custom section", () => {
+  const parsed: ParsedResume = {
+    ...empty(),
+    experienceText: "Engineer, Analytical Co",
+  };
+  const { patch } = parsedToResumeSeed(parsed, OPTS);
+  // No year anchor → mapper drops it → raw fallback preserved, nothing fabricated.
   expect(patch.workExperiences).toBeUndefined();
-  expect(patch.educations).toBeUndefined();
-  const titles = patch.customSections?.map((s) => s.title);
-  expect(titles).toContain("Imported: Experience");
-  expect(titles).toContain("Imported: Education");
   const exp = patch.customSections?.find((s) => s.title === "Imported: Experience");
   expect(exp?.items[0]?.description).toContain("Analytical Co");
 });
