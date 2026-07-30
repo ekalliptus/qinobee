@@ -11,6 +11,8 @@ import type {
 import { parseResumeText } from "./parse-resume-text";
 import type { ParsedResume } from "./parse-resume-text";
 import type { AiService } from "@modules/resume/services/ai-service";
+import { toWorkExperience, toEducation } from "@modules/resume/services/ai-service";
+import { splitExperienceBlocks, splitEducationBlocks } from "./split-sections";
 
 // customSectionSchema item `description` is boundedText(2000); cap raw text so
 // the patch always validates. Nothing is lost that the parser cannot already
@@ -91,9 +93,25 @@ export function parsedToResumeSeed(
     patch.skillGroups = [{ category: "custom", label: "Imported skills", skills: parsed.skills }];
   }
 
+  // Deterministic structuring: run the section splitters through the SAME
+  // schema mappers the AI path uses. Structured entries win; the raw
+  // "Imported:" custom section is only a fallback when a splitter yields
+  // nothing for that part (never fabricating entries the user didn't write).
+  const workExperiences = splitExperienceBlocks(parsed.experienceText ?? "")
+    .map(toWorkExperience)
+    .filter((e): e is NonNullable<typeof e> => e !== null);
+  if (workExperiences.length > 0) patch.workExperiences = workExperiences;
+
+  const educations = splitEducationBlocks(parsed.educationText ?? "")
+    .map(toEducation)
+    .filter((e): e is NonNullable<typeof e> => e !== null);
+  if (educations.length > 0) patch.educations = educations;
+
   const customSections: CustomSection[] = [];
-  if (parsed.experienceText) customSections.push(importedSection("Imported: Experience", parsed.experienceText));
-  if (parsed.educationText) customSections.push(importedSection("Imported: Education", parsed.educationText));
+  if (parsed.experienceText && workExperiences.length === 0)
+    customSections.push(importedSection("Imported: Experience", parsed.experienceText));
+  if (parsed.educationText && educations.length === 0)
+    customSections.push(importedSection("Imported: Education", parsed.educationText));
   if (customSections.length > 0) patch.customSections = customSections;
 
   return { input, patch };

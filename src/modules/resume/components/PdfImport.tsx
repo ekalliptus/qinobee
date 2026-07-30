@@ -90,7 +90,7 @@ export default function PdfImport() {
   const [language, setLanguage] = useState<"id" | "en">("id");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
-  const [useAi, setUseAi] = useState(false);
+  const [useAi, setUseAi] = useState<boolean>(features.aiAssist);
 
   const aiEnabled = features.aiAssist;
   const errorId = useId();

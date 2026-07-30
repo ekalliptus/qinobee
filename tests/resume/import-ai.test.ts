@@ -119,18 +119,21 @@ test("useAi with structured results → structured entries, no imported custom s
   expect(titles).not.toContain("Imported: Education");
 });
 
-test("useAi false → deterministic custom sections, empty structured, aiStructured false", async () => {
+test("useAi false → heuristic structures dated blocks, no imported custom sections, aiStructured false", async () => {
   const db = await seededDb();
   const { id, aiStructured } = await importResume(db, "u1", { text: SAMPLE });
   expect(aiStructured).toBe(false);
   const doc = await loadDoc(db, id);
-  expect(doc.workExperiences.length).toBe(0);
+  // SAMPLE's experience/education carry year ranges, so the deterministic
+  // splitters structure them without AI (P2) rather than dumping raw text.
+  expect(doc.workExperiences.length).toBe(1);
+  expect(doc.educations.length).toBe(1);
   const titles = doc.customSections.map((s) => s.title);
-  expect(titles).toContain("Imported: Experience");
-  expect(titles).toContain("Imported: Education");
+  expect(titles).not.toContain("Imported: Experience");
+  expect(titles).not.toContain("Imported: Education");
 });
 
-test("useAi with empty AI result (fallback) → deterministic custom sections kept, aiStructured false", async () => {
+test("useAi with empty AI result (fallback) → heuristic structuring fills the gap, aiStructured false", async () => {
   const db = await seededDb();
   const stub = stubAi({ workExperiences: [], educations: [], source: "fallback" });
   const { id, aiStructured } = await importResume(db, "u1", {
@@ -140,13 +143,15 @@ test("useAi with empty AI result (fallback) → deterministic custom sections ke
   });
   expect(aiStructured).toBe(false);
   const doc = await loadDoc(db, id);
-  expect(doc.workExperiences.length).toBe(0);
+  // AI produced nothing; the deterministic seed still structures the dated blocks.
+  expect(doc.workExperiences.length).toBe(1);
+  expect(doc.educations.length).toBe(1);
   const titles = doc.customSections.map((s) => s.title);
-  expect(titles).toContain("Imported: Experience");
-  expect(titles).toContain("Imported: Education");
+  expect(titles).not.toContain("Imported: Experience");
+  expect(titles).not.toContain("Imported: Education");
 });
 
-test("useAi with only experiences structured → keeps education custom section only", async () => {
+test("useAi with only experiences structured → education filled by heuristic, no imported sections", async () => {
   const db = await seededDb();
   const stub = stubAi({ workExperiences: [WE], educations: [], source: "ai" });
   const { id, aiStructured } = await importResume(db, "u1", {
@@ -157,9 +162,11 @@ test("useAi with only experiences structured → keeps education custom section 
   expect(aiStructured).toBe(true);
   const doc = await loadDoc(db, id);
   expect(doc.workExperiences.length).toBe(1);
+  // AI omitted education, but the heuristic seed structured the dated block.
+  expect(doc.educations.length).toBe(1);
   const titles = doc.customSections.map((s) => s.title);
   expect(titles).not.toContain("Imported: Experience");
-  expect(titles).toContain("Imported: Education");
+  expect(titles).not.toContain("Imported: Education");
 });
 
 test("useAi with rich extractResume → all fields populated, no Imported custom sections, aiStructured", async () => {

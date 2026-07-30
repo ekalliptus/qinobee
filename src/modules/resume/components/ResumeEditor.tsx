@@ -537,7 +537,7 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
       </div>
 
       {/* Desktop 3-pane grid: fixed nav · scrollable form (sticky header) · preview */}
-      <div className="hidden gap-4 md:grid md:grid-cols-[220px_minmax(0,1fr)_minmax(0,45%)]">
+      <div className="hidden gap-4 md:grid md:grid-cols-[220px_minmax(0,1fr)_minmax(0,48%)]">
         <div className="min-w-0">{nav}</div>
 
         {/*

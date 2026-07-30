@@ -43,7 +43,7 @@ export function resolveSettings(
     ),
     fontScale: num(s["fontScale"], defaults.fontScale ?? 1),
     lineHeight: num(s["lineHeight"], defaults.lineHeight ?? 1.45),
-    sectionSpacing: num(s["sectionSpacing"], defaults.sectionSpacing ?? 6),
+    sectionSpacing: num(s["sectionSpacing"], defaults.sectionSpacing ?? 7),
     margin: num(s["margin"], defaults.margin ?? 16),
     headingStyle: str(s["headingStyle"], defaults.headingStyle ?? "default"),
     accentColor: str(s["accentColor"], defaults.accentColor ?? "#1f2937"),

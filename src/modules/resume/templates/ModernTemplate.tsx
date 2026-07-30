@@ -48,7 +48,7 @@ export function ModernTemplate({ resume }: ResumeTemplateProps) {
     letterSpacing: "0.04em",
     borderLeft: `3px solid ${s.accentColor}`,
     paddingLeft: "3mm",
-    margin: "0 0 2.5mm",
+    margin: "0 0 2mm",
     color: "#111827",
   };
 
@@ -80,7 +80,6 @@ export function ModernTemplate({ resume }: ResumeTemplateProps) {
         <ContactLine
           resume={resume}
           showLinks={s.showLinks}
-          separator="  |  "
           style={{ marginTop: "2mm", fontSize: "0.9em", color: "#4b5563" }}
         />
       </header>

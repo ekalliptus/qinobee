@@ -227,6 +227,21 @@ function mapExperience(item: StructuredExperience): WorkExperience | null {
   return parsed.success ? parsed.data : null;
 }
 
+// Shared mapping entry points: validate a loose (AI or heuristic) item against
+// the structured schema, then map to a schema-valid entity. Single source of
+// mapping truth for both the AI extraction path and the deterministic splitter.
+export function toWorkExperience(loose: unknown): WorkExperience | null {
+  const s = structuredExperienceSchema.safeParse(loose);
+  if (!s.success) return null; // drops items missing jobTitle/company
+  return mapExperience(s.data);
+}
+
+export function toEducation(loose: unknown): Education | null {
+  const s = structuredEducationSchema.safeParse(loose);
+  if (!s.success) return null; // drops items missing institution
+  return mapEducation(s.data);
+}
+
 function mapEducation(item: StructuredEducation): Education | null {
   const candidate: Record<string, unknown> = {
     institution: item.institution,
@@ -405,18 +420,14 @@ export function createAiService(opts: AiServiceOptions = {}): AiService {
         const workExperiences: WorkExperience[] = [];
         if (Array.isArray(rawExp)) {
           for (const raw of rawExp.slice(0, 30)) {
-            const s = structuredExperienceSchema.safeParse(raw);
-            if (!s.success) continue; // drops items missing jobTitle/company
-            const mapped = mapExperience(s.data);
+            const mapped = toWorkExperience(raw);
             if (mapped) workExperiences.push(mapped);
           }
         }
         const educations: Education[] = [];
         if (Array.isArray(rawEdu)) {
           for (const raw of rawEdu.slice(0, 30)) {
-            const s = structuredEducationSchema.safeParse(raw);
-            if (!s.success) continue; // drops items missing institution
-            const mapped = mapEducation(s.data);
+            const mapped = toEducation(raw);
             if (mapped) educations.push(mapped);
           }
         }
@@ -460,9 +471,7 @@ export function createAiService(opts: AiServiceOptions = {}): AiService {
         const rawExp = rec.workExperiences;
         if (Array.isArray(rawExp)) {
           for (const raw of rawExp.slice(0, 30)) {
-            const s = structuredExperienceSchema.safeParse(raw);
-            if (!s.success) continue;
-            const mapped = mapExperience(s.data);
+            const mapped = toWorkExperience(raw);
             if (mapped) workExperiences.push(mapped);
           }
         }
@@ -470,9 +479,7 @@ export function createAiService(opts: AiServiceOptions = {}): AiService {
         const rawEdu = rec.educations;
         if (Array.isArray(rawEdu)) {
           for (const raw of rawEdu.slice(0, 30)) {
-            const s = structuredEducationSchema.safeParse(raw);
-            if (!s.success) continue;
-            const mapped = mapEducation(s.data);
+            const mapped = toEducation(raw);
             if (mapped) educations.push(mapped);
           }
         }
