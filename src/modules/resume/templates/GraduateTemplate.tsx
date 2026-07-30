@@ -51,7 +51,7 @@ export function GraduateTemplate({ resume }: ResumeTemplateProps) {
     color: "#ffffff",
     padding: "1mm 3mm",
     borderRadius: "2mm",
-    margin: "0 0 2.5mm",
+    margin: "0 0 2mm",
   };
 
   return (
