@@ -77,3 +77,53 @@ test("dedupes links and skills, warns on missing email", () => {
   expect(p.firstName).toBe("Jane");
   expect(p.lastName).toBe("Q Public");
 });
+
+// Regression: CVs use varied section headings; the parser must normalize synonyms.
+const SYNONYMS_CV = `Maya Smith
+Senior Designer
+maya@example.com | Berlin, Germany
+
+Professional Experience
+Lead Designer, Studio X (2019 - Present)
+- Redesigned the marketing site
+
+Employment History (Prior)
+Designer, Co Y (2017 - 2019)
+
+Academic Background
+M.A. Design, UdK Berlin (2015 - 2017)
+
+Technical Skills
+Figma, Prototyping
+
+Core Competencies
+Leadership, Mentorship
+
+Certifications & Licenses
+Certified UX Designer
+`;
+
+test("normalizes experience heading synonyms", () => {
+  const p = parseResumeText(SYNONYMS_CV);
+  expect(p.experienceText?.toLowerCase()).toContain("lead designer");
+  expect(p.experienceText?.toLowerCase()).toContain("designer, co y");
+});
+
+test("normalizes education synonyms (Academic Background)", () => {
+  const p = parseResumeText(SYNONYMS_CV);
+  expect(p.educationText?.toLowerCase()).toContain("udk berlin");
+});
+
+test("normalizes skills synonyms and merges", () => {
+  const p = parseResumeText(SYNONYMS_CV);
+  expect(p.skills).toContain("Figma");
+  // "Core Competencies" should also map to skills; only the LAST skills section
+  // wins the flat list, so Leadership/Mentorship must be present too.
+  expect(p.skills.some((s) => /leadership/i.test(s))).toBe(true);
+});
+
+test("extracts city/country from contact block", () => {
+  const p = parseResumeText(SYNONYMS_CV);
+  expect(p.city).toBe("Berlin");
+  expect(p.country).toBe("Germany");
+});
