@@ -61,8 +61,10 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
         // Readable floor: computed fit never goes microscopic (manual +/- can).
         let next = Math.max(fitWidthScale, 0.62);
         if (fitRef.current === "page") {
+          // Fit ONE A4 page height into the viewport (not the full content, which
+          // may span multiple pages). A4 height in px at the current content scale.
           const availH = viewport.clientHeight - 48;
-          const a4hPx = content.getBoundingClientRect().height / (zoomRef.current || 1);
+          const a4hPx = (297 * a4wPx) / 210; // preserve aspect ratio
           next = Math.min(next, availH / a4hPx);
         }
         setZoom(clampZoom(next));
@@ -140,30 +142,32 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
         ref={viewportRef}
         className="relative max-h-[70vh] w-full overflow-auto bg-[var(--color-muted)] p-6"
       >
-        {/* Outer box occupies the SCALED size so `margin:0 auto` centers it
-            correctly and overflow scrolls symmetrically. The inner box keeps
-            its true 210mm width and is scaled from the top-left corner. */}
+        {/* Center the scaled page. We wrap the true-size content in a box whose
+            transform scales it, and size the OUTER box to the scaled width so
+            `margin:0 auto` recenters. The outer height is left AUTO so it grows
+            with the content — multi-page CVs scroll instead of being clipped by
+            a stale measured height. Page-break guides are drawn inside the
+            scaled content so they line up with each A4 boundary. */}
         <div
           style={{
             width: `${A4_WIDTH_MM * zoom}mm`,
-            height: `${(heightMm ?? 297) * zoom}mm`,
             margin: "0 auto",
-            position: "relative",
           }}
         >
           <div
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
               width: `${A4_WIDTH_MM}mm`,
               transform: `scale(${zoom})`,
               transformOrigin: "top left",
+              position: "relative",
             }}
           >
-            <div ref={contentRef} className="resume-page">
+            <div ref={contentRef} className="resume-page resume-page--flow">
               <TemplateStage resume={resume} />
             </div>
+            {/* Virtual page-boundary guides: a dashed rule every 297mm so a
+                multi-page CV visually reads as separate A4 sheets. Sits above
+                the content; hidden in print. */}
             {pages > 1
               ? Array.from({ length: pages - 1 }, (_, i) => (
                   <div
@@ -175,8 +179,8 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
                       left: 0,
                       right: 0,
                       top: `${(i + 1) * 297}mm`,
-                      borderTop: "1px dashed var(--color-ink)",
-                      opacity: 0.35,
+                      borderTop: "2px dashed var(--color-ink)",
+                      opacity: 0.4,
                       pointerEvents: "none",
                     }}
                   />
