@@ -2,7 +2,7 @@ import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "rea
 import { FileText, Maximize2, Minus, Plus } from "lucide-react";
 import type { ResumeDocument } from "@modules/resume/types";
 import { getTemplate } from "@modules/resume/templates/registry";
-import { pageBreakInfo, pxToMm } from "@modules/resume/utils/page-break";
+import { A4_PAGE_MM, pageBreakInfo, pxToMm } from "@modules/resume/utils/page-break";
 import "@/styles/print.css";
 
 const A4_WIDTH_MM = 210;
@@ -77,7 +77,9 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
   }, [resume, fit]);
 
   const info = useMemo(
-    () => (heightMm == null ? null : pageBreakInfo(heightMm)),
+    // Count against the full A4 page (print uses @page margin:0); a small
+    // tolerance keeps a page that just fills 297mm from counting as 2.
+    () => (heightMm == null ? null : pageBreakInfo(heightMm, A4_PAGE_MM, 6)),
     [heightMm],
   );
 
@@ -138,36 +140,49 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
         ref={viewportRef}
         className="relative max-h-[70vh] w-full overflow-auto bg-[var(--color-muted)] p-6"
       >
+        {/* Outer box occupies the SCALED size so `margin:0 auto` centers it
+            correctly and overflow scrolls symmetrically. The inner box keeps
+            its true 210mm width and is scaled from the top-left corner. */}
         <div
           style={{
-            position: "relative",
-            width: `${A4_WIDTH_MM}mm`,
-            transform: `scale(${zoom})`,
-            transformOrigin: "top center",
+            width: `${A4_WIDTH_MM * zoom}mm`,
+            height: `${(heightMm ?? 297) * zoom}mm`,
             margin: "0 auto",
+            position: "relative",
           }}
         >
-          <div ref={contentRef} className="resume-page">
-            <TemplateStage resume={resume} />
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: `${A4_WIDTH_MM}mm`,
+              transform: `scale(${zoom})`,
+              transformOrigin: "top left",
+            }}
+          >
+            <div ref={contentRef} className="resume-page">
+              <TemplateStage resume={resume} />
+            </div>
+            {pages > 1
+              ? Array.from({ length: pages - 1 }, (_, i) => (
+                  <div
+                    key={i}
+                    className="no-print"
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      top: `${(i + 1) * 297}mm`,
+                      borderTop: "1px dashed var(--color-ink)",
+                      opacity: 0.35,
+                      pointerEvents: "none",
+                    }}
+                  />
+                ))
+              : null}
           </div>
-          {pages > 1
-            ? Array.from({ length: pages - 1 }, (_, i) => (
-                <div
-                  key={i}
-                  className="no-print"
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    top: `${(i + 1) * 297}mm`,
-                    borderTop: "1px dashed var(--color-ink)",
-                    opacity: 0.35,
-                    pointerEvents: "none",
-                  }}
-                />
-              ))
-            : null}
         </div>
       </div>
     </div>

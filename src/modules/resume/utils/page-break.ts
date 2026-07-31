@@ -13,18 +13,30 @@ export function pxToMm(px: number, dpi = 96): number {
   return (px * 25.4) / dpi;
 }
 
-/** Number of A4 pages needed for the given content height (min 1). */
-export function estimatePages(contentHeightMm: number, usableMm = A4_CONTENT_MM): number {
-  return Math.max(1, Math.ceil(contentHeightMm / usableMm));
+/** Full A4 page height in mm (used when counting rendered/printed pages). */
+export const A4_PAGE_MM = 297;
+
+/**
+ * Number of A4 pages needed for the given content height (min 1).
+ * `toleranceMm` absorbs sub-pixel/rounding slack so content that just fills a
+ * page isn't counted as spilling onto the next one.
+ */
+export function estimatePages(
+  contentHeightMm: number,
+  usableMm = A4_CONTENT_MM,
+  toleranceMm = 0,
+): number {
+  return Math.max(1, Math.ceil((contentHeightMm - toleranceMm) / usableMm));
 }
 
 /** Page count plus a flag for content overflowing a single page. */
 export function pageBreakInfo(
   contentHeightMm: number,
   usableMm = A4_CONTENT_MM,
+  toleranceMm = 0,
 ): { pages: number; overflow: boolean } {
   return {
-    pages: estimatePages(contentHeightMm, usableMm),
-    overflow: contentHeightMm > usableMm,
+    pages: estimatePages(contentHeightMm, usableMm, toleranceMm),
+    overflow: contentHeightMm - toleranceMm > usableMm,
   };
 }

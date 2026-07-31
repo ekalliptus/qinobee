@@ -9,6 +9,14 @@
   margin: 0 auto;
 }
 
+/* The résumé must use its own ATS-safe typeface for EVERYTHING. Without this,
+   the app's global `h1..h6 { font-family: var(--font-heading) }` (a display
+   font, Space Grotesk) leaks into the CV headings — not formal, not ATS-safe.
+   Force headings inside the page to inherit the template's font. */
+.resume-page :where(h1, h2, h3, h4, h5, h6) {
+  font-family: inherit;
+}
+
 @page {
   size: A4;
   margin: 0;
@@ -19,9 +27,13 @@
     display: none !important;
   }
 
+  /* In print the template <article> is the page; don't let the wrapper impose a
+     fixed A4 box that blocks natural pagination of multi-page content. */
   .resume-page {
     box-shadow: none;
     border: none;
     margin: 0;
+    width: auto;
+    min-height: 0;
   }
 }
