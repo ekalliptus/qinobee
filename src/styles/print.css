@@ -9,12 +9,51 @@
   margin: 0 auto;
 }
 
+/* Preview-only variant: a continuous content sheet that may grow beyond one A4
+   page. Drop the box-shadow here — the page-break separators provide visual
+   page edges instead, and a single shadow at the sheet bottom would look wrong. */
+.resume-page--flow {
+  box-shadow: none;
+}
+
 /* The résumé must use its own ATS-safe typeface for EVERYTHING. Without this,
    the app's global `h1..h6 { font-family: var(--font-heading) }` (a display
    font, Space Grotesk) leaks into the CV headings — not formal, not ATS-safe.
    Force headings inside the page to inherit the template's font. */
 .resume-page :where(h1, h2, h3, h4, h5, h6) {
   font-family: inherit;
+}
+
+/* --- Page-break separators (preview only; .no-print hides them on export) ---
+
+   Drawn at every 297mm A4 boundary so a multi-page CV is unmistakable: a bold
+   dashed rule straddling the seam with a labelled pill centred on it. They are
+   absolutely positioned inside the (pre-zoom) page wrapper, so they scale
+   correctly with CSS `zoom` and always land on the real boundary. */
+.preview-page-break {
+  pointer-events: none;
+  height: 0;
+  border-top: 3px dashed var(--color-ink);
+  /* Centre the 3px rule on the exact boundary line. */
+  transform: translateY(-1.5px);
+}
+.preview-page-break__label {
+  position: absolute;
+  left: 50%;
+  top: -13px;
+  transform: translateX(-50%);
+  background: var(--color-muted, #f5f5f4);
+  border: 2px solid var(--color-ink, #171717);
+  border-radius: 9999px;
+  padding: 1px 12px;
+  font-family: var(--font-body, system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--color-ink, #171717);
 }
 
 @page {

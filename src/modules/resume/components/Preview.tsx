@@ -140,14 +140,14 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
 
       <div
         ref={viewportRef}
-        className="relative max-h-[70vh] w-full overflow-auto bg-[var(--color-muted)] p-6"
+        className="relative w-full overflow-auto bg-[var(--color-muted)] p-6 md:max-h-[calc(100vh-7rem)]"
       >
         {/* Scale with CSS `zoom` (not `transform`): zoom scales the LAYOUT box
             too, so height:auto grows with content, `margin:0 auto` centers, and
             a multi-page CV becomes a genuinely tall, scrollable page. `transform`
             would keep the unscaled layout height and clip/mis-scroll. Page-break
-            guides sit every 297mm inside the page (pre-zoom units) so they align
-            with each A4 boundary. */}
+            separators sit every 297mm inside the page (pre-zoom units) so they
+            align with each A4 boundary and scale with zoom. */}
         <div
           style={{
             zoom,
@@ -163,18 +163,19 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
             ? Array.from({ length: pages - 1 }, (_, i) => (
                 <div
                   key={i}
-                  className="no-print"
+                  className="no-print preview-page-break"
                   aria-hidden="true"
                   style={{
                     position: "absolute",
                     left: 0,
                     right: 0,
-                    top: `${(i + 1) * 297}mm`,
-                    borderTop: "2px dashed var(--color-ink)",
-                    opacity: 0.4,
-                    pointerEvents: "none",
+                    top: `${(i + 1) * A4_PAGE_MM}mm`,
                   }}
-                />
+                >
+                  <span className="preview-page-break__label">
+                    Page {i + 2}
+                  </span>
+                </div>
               ))
             : null}
         </div>
