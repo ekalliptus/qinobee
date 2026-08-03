@@ -239,11 +239,6 @@ export default function TemplatePanel({
           checked={s.showLinks}
           onChange={(v) => onSettingsChange({ showLinks: v })}
         />
-        <Toggle
-          label="Show photo"
-          checked={s.showPhoto}
-          onChange={(v) => onSettingsChange({ showPhoto: v })}
-        />
       </section>
     </div>
   );
