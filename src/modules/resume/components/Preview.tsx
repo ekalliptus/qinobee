@@ -173,7 +173,11 @@ function Preview(props: {
             position: "relative",
           }}
         >
-          <div ref={contentRef} className="resume-page resume-page--flow">
+          <div 
+            ref={contentRef} 
+            className="resume-page resume-page--flow"
+            style={{ minHeight: `${pages * 297}mm` }}
+          >
             <TemplateStage resume={resume} />
           </div>
           {boundaries.map((topMm, i) => (
@@ -181,7 +185,7 @@ function Preview(props: {
               key={i}
               className="no-print preview-page-break"
               aria-hidden="true"
-              style={{ position: "absolute", left: 0, right: 0, top: `${topMm}mm` }}
+              style={{ position: "absolute", left: "-20mm", right: "-20mm", top: `${topMm}mm` }}
             />
           ))}
         </div>

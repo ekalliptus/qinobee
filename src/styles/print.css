@@ -24,40 +24,31 @@
   font-family: inherit;
 }
 
-/* Page-break seam (preview only). A sharp neo-brutalist seam indicating
-   the edge between two sheets. Hidden on print. */
+/* Page-break guide (preview only). A very thin, subtle line that extends
+   outside the paper to act as a visual boundary marker, without disrupting
+   the text readability if it crosses a paragraph. */
 .preview-page-break {
   pointer-events: none;
-  height: 24px;
-  margin-top: -12px;
-  background: var(--color-muted, #f5f5f4);
-  border-top: 2px solid var(--color-ink, #171717);
-  border-bottom: 2px solid var(--color-ink, #171717);
+  height: 0;
+  border-top: 1px dashed rgba(23, 23, 23, 0.4);
   position: relative;
+  z-index: 10;
 }
 .preview-page-break::before {
-  content: "PAGE BREAK";
+  content: "PAGE " counter(page);
+  counter-increment: page;
   position: absolute;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--color-muted, #f5f5f4);
-  padding: 0 8px;
+  right: 100%;
+  margin-right: 8px;
+  transform: translateY(-50%);
+  background: transparent;
   font-family: var(--font-mono, monospace);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: rgba(23, 23, 23, 0.5);
-  z-index: 1;
-}
-.preview-page-break::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  border-top: 2px dashed rgba(23, 23, 23, 0.3);
-  transform: translateY(-50%);
+  white-space: nowrap;
 }
 
 @page {
