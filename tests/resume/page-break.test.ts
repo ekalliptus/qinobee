@@ -6,6 +6,7 @@ import {
   pageBreakInfo,
   mmToPx,
   pxToMm,
+  pageBoundaryOffsetsMm,
 } from "@modules/resume/utils/page-break";
 
 test("A4 usable height constant is ~ one page", () => {
@@ -41,4 +42,20 @@ test("a page that just fills A4 counts as 1 (full-page unit + tolerance)", () =>
 test("mmToPx and pxToMm are inverse at 96dpi", () => {
   expect(mmToPx(A4_CONTENT_MM)).toBeCloseTo((A4_CONTENT_MM * 96) / 25.4, 5);
   expect(pxToMm(mmToPx(100))).toBeCloseTo(100, 5);
+});
+
+test("no boundaries for single-page content", () => {
+  expect(pageBoundaryOffsetsMm(200, A4_PAGE_MM)).toEqual([]);
+});
+
+test("one boundary at 297mm for a 2-page document", () => {
+  expect(pageBoundaryOffsetsMm(A4_PAGE_MM + 100, A4_PAGE_MM)).toEqual([297]);
+});
+
+test("boundaries repeat every page for a 3-page document", () => {
+  expect(pageBoundaryOffsetsMm(A4_PAGE_MM * 2 + 50, A4_PAGE_MM)).toEqual([297, 594]);
+});
+
+test("content exactly one page has no boundary", () => {
+  expect(pageBoundaryOffsetsMm(A4_PAGE_MM, A4_PAGE_MM)).toEqual([]);
 });

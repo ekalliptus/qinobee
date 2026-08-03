@@ -40,3 +40,19 @@ export function pageBreakInfo(
     overflow: contentHeightMm - toleranceMm > usableMm,
   };
 }
+
+/**
+ * Y offsets (mm) where each A4 page boundary falls inside one continuous
+ * content sheet. Returns [] for single-page content. Used by the preview to
+ * draw page-break seams that scale with CSS zoom.
+ */
+export function pageBoundaryOffsetsMm(
+  contentHeightMm: number,
+  pageMm = A4_PAGE_MM,
+): number[] {
+  const offsets: number[] = [];
+  for (let y = pageMm; y < contentHeightMm; y += pageMm) {
+    offsets.push(y);
+  }
+  return offsets;
+}
