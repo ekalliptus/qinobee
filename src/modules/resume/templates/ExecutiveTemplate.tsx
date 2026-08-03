@@ -33,7 +33,7 @@ export function ExecutiveTemplate({ resume }: ResumeTemplateProps) {
   const s = resolveSettings(resume, {
     accentColor: "#1f2937",
     lineHeight: 1.5,
-    fontFamily: "'Palatino Linotype', Palatino, Georgia, serif",
+    fontFamily: "Garamond, serif",
   });
   const lang = resume.language;
   const pi = resume.personalInformation;

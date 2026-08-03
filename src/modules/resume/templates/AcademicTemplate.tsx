@@ -36,7 +36,7 @@ export function AcademicTemplate({ resume }: ResumeTemplateProps) {
     accentColor: "#111827",
     lineHeight: 1.4,
     sectionSpacing: 5,
-    fontFamily: "'Times New Roman', Georgia, serif",
+    fontFamily: "'Times New Roman', Times, serif",
   });
   const lang = resume.language;
   const pi = resume.personalInformation;

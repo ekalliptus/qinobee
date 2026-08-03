@@ -32,7 +32,7 @@ const DEFAULT_ORDER: SectionKey[] = [
 export function EssentialTemplate({ resume }: ResumeTemplateProps) {
   const s = resolveSettings(resume, {
     accentColor: "#111827",
-    fontFamily: "Georgia, 'Times New Roman', serif",
+    fontFamily: "Arial, 'Helvetica Neue', Helvetica, sans-serif",
   });
   const lang = resume.language;
   const pi = resume.personalInformation;

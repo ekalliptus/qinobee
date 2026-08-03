@@ -36,7 +36,7 @@ const SIDE_ORDER: SectionKey[] = [
 export function TechnicalTemplate({ resume }: ResumeTemplateProps) {
   const s = resolveSettings(resume, {
     accentColor: "#0f766e",
-    fontFamily: "'Segoe UI', Roboto, Helvetica, sans-serif",
+    fontFamily: "Calibri, 'Segoe UI', Roboto, sans-serif",
     sectionSpacing: 6,
   });
   const lang = resume.language;

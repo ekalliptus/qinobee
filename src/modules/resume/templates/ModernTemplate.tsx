@@ -33,7 +33,7 @@ export function ModernTemplate({ resume }: ResumeTemplateProps) {
   const s = resolveSettings(resume, {
     accentColor: "#2563eb",
     sectionSpacing: 8,
-    fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    fontFamily: "Calibri, 'Segoe UI', Roboto, sans-serif",
   });
   const lang = resume.language;
   const pi = resume.personalInformation;
