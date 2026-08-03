@@ -19,6 +19,7 @@ const BOUNDS = {
 
 /** Curated legible ATS-friendly families. */
 const FONT_FAMILIES: { label: string; value: string }[] = [
+  { label: "Lato", value: "Lato, Arial, sans-serif" },
   { label: "Arial / Helvetica", value: "Arial, 'Helvetica Neue', Helvetica, sans-serif" },
   { label: "Calibri / Segoe", value: "Calibri, 'Segoe UI', Roboto, sans-serif" },
   { label: "Georgia", value: "Georgia, serif" },

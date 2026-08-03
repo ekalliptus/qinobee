@@ -33,7 +33,7 @@ const DEFAULT_ORDER: SectionKey[] = [
 export function GraduateTemplate({ resume }: ResumeTemplateProps) {
   const s = resolveSettings(resume, {
     accentColor: "#0d9488",
-    fontFamily: "Arial, 'Helvetica Neue', Helvetica, sans-serif",
+    fontFamily: "Lato, Arial, sans-serif",
   });
   const lang = resume.language;
   const pi = resume.personalInformation;

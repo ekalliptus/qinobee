@@ -12,6 +12,7 @@ const SIZE_STEPS = [
   { label: "L", value: 1.15 },
 ];
 const FONTS = [
+  { label: "Lato", value: "Lato, Arial, sans-serif" },
   { label: "Arial / Helvetica", value: "Arial, 'Helvetica Neue', Helvetica, sans-serif" },
   { label: "Calibri / Segoe", value: "Calibri, 'Segoe UI', Roboto, sans-serif" },
   { label: "Georgia", value: "Georgia, serif" },

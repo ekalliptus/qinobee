@@ -39,10 +39,10 @@ export function resolveSettings(
     fontFamily: str(
       s["fontFamily"],
       defaults.fontFamily ??
-        "Arial, 'Helvetica Neue', Helvetica, sans-serif",
+        "Lato, Arial, 'Helvetica Neue', sans-serif",
     ),
     fontScale: num(s["fontScale"], defaults.fontScale ?? 1),
-    lineHeight: num(s["lineHeight"], defaults.lineHeight ?? 1.45),
+    lineHeight: num(s["lineHeight"], defaults.lineHeight ?? 1.5),
     sectionSpacing: num(s["sectionSpacing"], defaults.sectionSpacing ?? 7),
     margin: num(s["margin"], defaults.margin ?? 16),
     headingStyle: str(s["headingStyle"], defaults.headingStyle ?? "default"),
@@ -67,7 +67,7 @@ export function pageStyle(s: ResolvedSettings): CSSProperties {
     background: "#ffffff",
     color: "#111827",
     fontFamily: s.fontFamily,
-    fontSize: `${11 * s.fontScale}pt`,
+    fontSize: `${13.5 * s.fontScale}px`,
     lineHeight: s.lineHeight,
   };
 }

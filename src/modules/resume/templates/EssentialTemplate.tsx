@@ -32,7 +32,7 @@ const DEFAULT_ORDER: SectionKey[] = [
 export function EssentialTemplate({ resume }: ResumeTemplateProps) {
   const s = resolveSettings(resume, {
     accentColor: "#111827",
-    fontFamily: "Arial, 'Helvetica Neue', Helvetica, sans-serif",
+    fontFamily: "Lato, Arial, sans-serif",
   });
   const lang = resume.language;
   const pi = resume.personalInformation;
@@ -41,30 +41,31 @@ export function EssentialTemplate({ resume }: ResumeTemplateProps) {
   );
 
   const heading: CSSProperties = {
-    fontSize: "1em",
-    letterSpacing: "0.08em",
+    fontSize: "0.95em",
+    fontWeight: 700,
+    letterSpacing: "0.05em",
     textTransform: "uppercase",
-    borderBottom: s.divider ? "1px solid #d1d5db" : "none",
+    borderBottom: s.divider ? "1px solid #9ca3af" : "none",
     paddingBottom: "1mm",
-    margin: `0 0 2mm`,
+    margin: `0 0 3mm`,
     color: s.accentColor,
   };
 
   return (
     <article style={pageStyle(s)}>
-      <header style={{ textAlign: s.alignment, marginBottom: "3mm" }}>
-        <h1 style={{ fontSize: "1.9em", margin: 0, color: s.accentColor }}>
+      <header style={{ textAlign: s.alignment, marginBottom: "5mm" }}>
+        <h1 style={{ fontSize: "1.6em", fontWeight: 700, margin: 0, color: s.accentColor }}>
           {fullName(pi)}
         </h1>
         {pi.headline ? (
-          <div style={{ fontSize: "1.05em", color: "#374151" }}>
+          <div style={{ fontSize: "1em", color: "#4b5563", marginTop: "1mm" }}>
             {pi.headline}
           </div>
         ) : null}
         <ContactLine
           resume={resume}
           showLinks={s.showLinks}
-          style={{ marginTop: "1.5mm", fontSize: "0.9em", color: "#374151" }}
+          style={{ marginTop: "2mm", fontSize: "0.85em", color: "#6b7280" }}
         />
       </header>
 
