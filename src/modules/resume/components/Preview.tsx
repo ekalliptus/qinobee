@@ -1,8 +1,14 @@
+import type { ReactNode } from "react";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FileText, Maximize2, Minus, Plus } from "lucide-react";
 import type { ResumeDocument } from "@modules/resume/types";
 import { getTemplate } from "@modules/resume/templates/registry";
-import { A4_PAGE_MM, pageBreakInfo, pxToMm } from "@modules/resume/utils/page-break";
+import {
+  A4_PAGE_MM,
+  pageBoundaryOffsetsMm,
+  pageBreakInfo,
+  pxToMm,
+} from "@modules/resume/utils/page-break";
 import "@/styles/print.css";
 
 const A4_WIDTH_MM = 210;
@@ -27,7 +33,12 @@ const TemplateStage = memo(function TemplateStage({ resume }: { resume: ResumeDo
   return <T.component resume={resume} mode="preview" />;
 });
 
-function Preview({ resume, className }: { resume: ResumeDocument; className?: string }) {
+function Preview(props: {
+  resume: ResumeDocument;
+  className?: string;
+  appearance?: ReactNode;
+}) {
+  const { resume, className } = props;
   const [zoom, setZoom] = useState(0.6);
   const [fit, setFit] = useState<FitMode>("width");
   const [heightMm, setHeightMm] = useState<number | null>(null);
@@ -85,6 +96,11 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
     [heightMm],
   );
 
+  const boundaries = useMemo(
+    () => (heightMm == null ? [] : pageBoundaryOffsetsMm(heightMm, A4_PAGE_MM)),
+    [heightMm],
+  );
+
   const nudge = (delta: number) => {
     setFit("none");
     setZoom((z) => clampZoom(z + delta));
@@ -94,6 +110,7 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
 
   return (
     <div className={`flex min-w-0 flex-col gap-2 ${className ?? ""}`}>
+      {props.appearance ? <div className="no-print">{props.appearance}</div> : null}
       <div
         role="toolbar"
         aria-label="Preview controls"
@@ -159,25 +176,14 @@ function Preview({ resume, className }: { resume: ResumeDocument; className?: st
           <div ref={contentRef} className="resume-page resume-page--flow">
             <TemplateStage resume={resume} />
           </div>
-          {pages > 1
-            ? Array.from({ length: pages - 1 }, (_, i) => (
-                <div
-                  key={i}
-                  className="no-print preview-page-break"
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    top: `${(i + 1) * A4_PAGE_MM}mm`,
-                  }}
-                >
-                  <span className="preview-page-break__label">
-                    Page {i + 2}
-                  </span>
-                </div>
-              ))
-            : null}
+          {boundaries.map((topMm, i) => (
+            <div
+              key={i}
+              className="no-print preview-page-break"
+              aria-hidden="true"
+              style={{ position: "absolute", left: 0, right: 0, top: `${topMm}mm` }}
+            />
+          ))}
         </div>
       </div>
     </div>

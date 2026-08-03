@@ -24,36 +24,15 @@
   font-family: inherit;
 }
 
-/* --- Page-break separators (preview only; .no-print hides them on export) ---
-
-   Drawn at every 297mm A4 boundary so a multi-page CV is unmistakable: a bold
-   dashed rule straddling the seam with a labelled pill centred on it. They are
-   absolutely positioned inside the (pre-zoom) page wrapper, so they scale
-   correctly with CSS `zoom` and always land on the real boundary. */
+/* Page-break seam (preview only). Subtle: a thin dashed rule with a small
+   muted gap band suggesting the edge between two sheets. Hidden on print. */
 .preview-page-break {
   pointer-events: none;
-  height: 0;
-  border-top: 3px dashed var(--color-ink);
-  /* Centre the 3px rule on the exact boundary line. */
-  transform: translateY(-1.5px);
-}
-.preview-page-break__label {
-  position: absolute;
-  left: 50%;
-  top: -13px;
-  transform: translateX(-50%);
+  height: 10px;
+  margin-top: -5px;
   background: var(--color-muted, #f5f5f4);
-  border: 2px solid var(--color-ink, #171717);
-  border-radius: 9999px;
-  padding: 1px 12px;
-  font-family: var(--font-body, system-ui, sans-serif);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--color-ink, #171717);
+  border-top: 1px dashed rgba(23, 23, 23, 0.45);
+  border-bottom: 1px dashed rgba(23, 23, 23, 0.2);
 }
 
 @page {
