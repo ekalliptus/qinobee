@@ -3,7 +3,6 @@ import {
   STAGES,
   stageSectionKeys,
   stageStatus,
-  type StageId,
 } from "@modules/resume/components/stages";
 import type { ResumeDocument } from "@modules/resume/types";
 
