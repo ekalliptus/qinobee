@@ -106,61 +106,56 @@ export function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto motion-reduce:transition-none"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 motion-reduce:transition-none"
       style={{ backgroundColor: "rgba(23,23,23,0.4)" }}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div 
-        className="flex min-h-full items-center justify-center p-4 sm:p-6"
-        onMouseDown={(e) => {
-          if (e.target === e.currentTarget) onClose();
-        }}
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={`neo-card ${SIZE_CLASS[size]} flex max-h-[calc(100vh-2rem)] w-full flex-col bg-[var(--color-white)]`}
       >
-        <div
-          ref={dialogRef}
-          role="dialog"
-          aria-modal="true"
-          aria-label={title}
-          className={`neo-card ${SIZE_CLASS[size]} w-full bg-[var(--color-white)]`}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <h2 className="font-[var(--font-heading)] text-lg font-bold">
-              {title}
-            </h2>
+        <div className="flex shrink-0 items-start justify-between gap-4">
+          <h2 className="font-[var(--font-heading)] text-lg font-bold">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="neo-button min-h-[44px] min-w-[44px] shrink-0 bg-[var(--color-white)] px-2 text-sm"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1 pb-1">
+          {children}
+        </div>
+
+        {primaryLabel && onPrimary ? (
+          <div className="mt-4 flex shrink-0 justify-end gap-2 border-t-2 border-[var(--color-ink)] pt-4">
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close dialog"
-              className="neo-button min-h-[44px] min-w-[44px] bg-[var(--color-white)] px-2 text-sm"
+              className="neo-button min-h-[44px] px-4 bg-[var(--color-white)] text-sm"
             >
-              ×
+              Cancel
+            </button>
+            <button
+              type="button"
+              data-dialog-primary
+              onClick={onPrimary}
+              className={`neo-button min-h-[44px] px-4 text-sm ${PRIMARY_BG[variant]}`}
+            >
+              {primaryLabel}
             </button>
           </div>
-
-          <div className="mt-4 flex flex-col gap-4">{children}</div>
-
-          {primaryLabel && onPrimary ? (
-            <div className="mt-6 flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="neo-button min-h-[44px] px-4 bg-[var(--color-white)] text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                data-dialog-primary
-                onClick={onPrimary}
-                className={`neo-button min-h-[44px] px-4 text-sm ${PRIMARY_BG[variant]}`}
-              >
-                {primaryLabel}
-              </button>
-            </div>
-          ) : null}
-        </div>
+        ) : null}
       </div>
     </div>
   );
