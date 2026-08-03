@@ -173,12 +173,15 @@ function Preview(props: {
             position: "relative",
           }}
         >
+          {/* Kulit luar (kertas). Tingginya dipaksa kelipatan penuh halaman. */}
           <div 
-            ref={contentRef} 
             className="resume-page resume-page--flow"
             style={{ minHeight: `${pages * 297}mm` }}
           >
-            <TemplateStage resume={resume} />
+            {/* Isi asli CV yang kita jadikan acuan ukuran (tanpa paksaan tinggi). */}
+            <div ref={contentRef}>
+              <TemplateStage resume={resume} />
+            </div>
           </div>
           {boundaries.map((topMm, i) => (
             <div
