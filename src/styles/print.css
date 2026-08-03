@@ -28,13 +28,27 @@
    the edge between two sheets. Hidden on print. */
 .preview-page-break {
   pointer-events: none;
-  height: 12px;
-  margin-top: -6px;
+  height: 24px;
+  margin-top: -12px;
   background: var(--color-muted, #f5f5f4);
   border-top: 2px solid var(--color-ink, #171717);
   border-bottom: 2px solid var(--color-ink, #171717);
-  /* Optional: dashed line in the middle to look like a tear edge */
   position: relative;
+}
+.preview-page-break::before {
+  content: "PAGE BREAK";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-muted, #f5f5f4);
+  padding: 0 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(23, 23, 23, 0.5);
+  z-index: 1;
 }
 .preview-page-break::after {
   content: "";
