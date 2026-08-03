@@ -3,19 +3,18 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { ResumeDocument, UpdateResumeInput } from "@modules/resume/types";
 import { useResumeEditorStore, type SaveResult } from "./store";
 import type { SaveStatus } from "./save-reconcile";
-import SectionNav from "./SectionNav";
-import { SECTIONS, type SectionKey } from "./sections/keys";
-import PersonalInfoSection from "./sections/PersonalInfoSection";
-import SummarySection from "./sections/SummarySection";
-import WorkExperienceSection from "./sections/WorkExperienceSection";
-import EducationSection from "./sections/EducationSection";
-import ProjectsSection from "./sections/ProjectsSection";
-import SkillsSection from "./sections/SkillsSection";
 import Preview from "./Preview";
 import TemplatePanel from "./TemplatePanel";
 import ScorePanel from "./ScorePanel";
 import MatchPanel from "./MatchPanel";
 import { AiAssistField, type RenderAiAssist } from "./AiPanel";
+import StageStepper from "./StageStepper";
+import StageForm from "./StageForm";
+import PreviewAppearance from "./PreviewAppearance";
+import { templateCapabilities } from "@modules/resume/templates/capabilities";
+import { STAGES, type StageId } from "./stages";
+import type { TemplateCapabilities } from "./PreviewAppearance";
+import { Dialog } from "@components/ui/Dialog";
 import { features } from "@/config/features";
 import type { ResumeTemplateSettings } from "@modules/resume/types";
 
@@ -84,38 +83,22 @@ const BTN = "neo-button min-h-[44px] px-3 text-sm bg-[var(--color-white)] text-[
 const ICON_BTN =
   "neo-button min-h-[44px] min-w-[44px] px-2 text-sm bg-[var(--color-white)] text-[var(--color-ink)]";
 
-function ActiveSection(props: {
-  active: SectionKey;
-  doc: ResumeDocument;
-  update: (fn: (prev: ResumeDocument) => ResumeDocument) => void;
-  renderAiAssist?: RenderAiAssist;
-}) {
-  switch (props.active) {
-    case "personalInformation":
-      return <PersonalInfoSection doc={props.doc} update={props.update} />;
-    case "professionalSummary":
-      return <SummarySection doc={props.doc} update={props.update} renderAiAssist={props.renderAiAssist} />;
-    case "workExperiences":
-      return <WorkExperienceSection doc={props.doc} update={props.update} renderAiAssist={props.renderAiAssist} />;
-    case "educations":
-      return <EducationSection doc={props.doc} update={props.update} />;
-    case "projects":
-      return <ProjectsSection doc={props.doc} update={props.update} />;
-    case "skillGroups":
-      return <SkillsSection doc={props.doc} update={props.update} />;
-  }
-}
-
 type MobileTab = "edit" | "preview" | "score";
 
 export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
   const store = useResumeEditorStore(props.initialDoc, { save });
-  const [active, setActive] = useState<SectionKey>("personalInformation");
+  const [stage, setStage] = useState<StageId>("personal");
+  const stageIdx = STAGES.findIndex((s) => s.id === stage);
+  const goNext = () => {
+    store.saveNow();
+    const next = STAGES[Math.min(STAGES.length - 1, stageIdx + 1)]!;
+    setStage(next.id);
+  };
+  const goBack = () => setStage(STAGES[Math.max(0, stageIdx - 1)]!.id);
   const [mobileTab, setMobileTab] = useState<MobileTab>("edit");
   const mobileTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [conflictDismissed, setConflictDismissed] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [showScore, setShowScore] = useState(false);
   const [showMatch, setShowMatch] = useState(false);
   const [aiConsent, setAiConsent] = useState(false);
 
@@ -230,20 +213,23 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
 
   const updateFn = (fn: (prev: ResumeDocument) => ResumeDocument) => store.update(fn);
 
-  const nav = (
-    <SectionNav doc={store.doc} active={active} onSelect={setActive} />
-  );
-  const form = (
-    <ActiveSection active={active} doc={store.doc} update={updateFn} renderAiAssist={renderAiAssist} />
-  );
-  const previewPane = (
-    <div className="flex min-w-0 flex-col gap-2">
-      <h2 className="text-lg font-bold">Live preview</h2>
-      <Preview resume={store.doc} />
-    </div>
+  const caps: TemplateCapabilities = templateCapabilities(store.doc.templateId);
+  const onSettingsChange = (patch: Partial<ResumeTemplateSettings>) =>
+    store.update({ templateSettings: { ...store.doc.templateSettings, ...patch } });
+  const appearance = (
+    <PreviewAppearance
+      resume={store.doc}
+      capabilities={caps}
+      onSettingsChange={onSettingsChange}
+      onOpenTemplate={() => setShowTemplates(true)}
+    />
   );
 
-  const activeLabel = SECTIONS.find((s) => s.key === active)?.label ?? "";
+  const reviewBody = (
+    <div className="flex flex-col gap-4">
+      <ScorePanel resumeId={store.doc.id} />
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -329,9 +315,7 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
           <button
             type="button"
             className={BTN}
-            aria-pressed={showScore}
-            aria-expanded={showScore}
-            onClick={() => setShowScore((v) => !v)}
+            onClick={() => { setStage("review"); setMobileTab("score"); }}
           >
             ATS Score
           </button>
@@ -428,34 +412,17 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
       ) : null}
 
       {/* Template + appearance panel */}
-      {showTemplates ? (
-        <div className="neo-card">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-bold">Template &amp; appearance</h2>
-            <button
-              type="button"
-              className={BTN}
-              onClick={() => setShowTemplates(false)}
-            >
-              Close
-            </button>
-          </div>
-          {templatePanel}
-        </div>
-      ) : null}
-
-      {/* ATS Score panel (desktop toggle; always available on mobile Score tab) */}
-      {showScore ? (
-        <div className="hidden md:block">
-          <ScorePanel resumeId={store.doc.id} />
-        </div>
-      ) : null}
+      <Dialog open={showTemplates} title="Template & appearance" size="lg" onClose={() => setShowTemplates(false)}>
+        {templatePanel}
+      </Dialog>
 
       {/* Match With a Job panel */}
-      {showMatch ? <MatchPanel resumeId={store.doc.id} /> : null}
+      <Dialog open={showMatch} title="Match with a job" size="lg" onClose={() => setShowMatch(false)}>
+        <MatchPanel resumeId={store.doc.id} />
+      </Dialog>
 
       {/* Mobile segmented control */}
-      <div className="flex gap-2 md:hidden" role="tablist" aria-label="Editor view">
+      <div className="flex gap-2 lg:hidden" role="tablist" aria-label="Editor view">
         {(["edit", "preview", "score"] as const).map((t, i, tabs) => {
           const selected = mobileTab === t;
           return (
@@ -500,78 +467,44 @@ export default function ResumeEditor(props: { initialDoc: ResumeDocument }) {
         id="editor-tabpanel"
         role="tabpanel"
         aria-labelledby={`editor-tab-${mobileTab}`}
-        className="flex flex-col gap-4 md:hidden"
+        className="flex flex-col gap-4 lg:hidden"
       >
         {mobileTab === "edit" ? (
-          <>
-            {/* Horizontal-scrolling section pill strip (no fixed 220px column on mobile) */}
-            <div className="-mx-1 overflow-x-auto px-1">
-              <nav aria-label="Resume sections" className="flex gap-2 pb-1">
-                {SECTIONS.map((s) => {
-                  const isActive = s.key === active;
-                  return (
-                    <button
-                      key={s.key}
-                      type="button"
-                      aria-current={isActive ? "true" : undefined}
-                      onClick={() => setActive(s.key)}
-                      className={`neo-button min-h-[44px] shrink-0 whitespace-nowrap px-3 text-left text-sm ${
-                        isActive
-                          ? "bg-[var(--color-ink)] text-[var(--color-paper)]"
-                          : "bg-[var(--color-white)] text-[var(--color-ink)]"
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-            {form}
-          </>
+          <div className="flex flex-col gap-4">
+            <StageStepper doc={store.doc} active={stage} onSelect={(id) => { setStage(id); setMobileTab("edit"); }} />
+            <StageForm stage={stage} doc={store.doc} update={updateFn} renderAiAssist={renderAiAssist} onBack={goBack} onNext={goNext} reviewBody={reviewBody} />
+          </div>
         ) : mobileTab === "preview" ? (
-          <Preview resume={store.doc} />
+          <Preview resume={store.doc} appearance={appearance} />
         ) : (
           <ScorePanel resumeId={store.doc.id} />
         )}
       </div>
 
-      {/* Desktop 3-pane grid: fixed nav · scrollable form (sticky header) · preview */}
-      <div className="hidden gap-4 md:grid md:grid-cols-[220px_minmax(0,1fr)_minmax(0,48%)]">
-        <div className="min-w-0">{nav}</div>
+      {/* Desktop stage stepper (above the columns) */}
+      <div className="hidden lg:block">
+        <StageStepper doc={store.doc} active={stage} onSelect={setStage} />
+      </div>
 
-        {/*
-          Form column. The section components render their own <h2> as the first
-          child of <section aria-labelledby>. To get a sticky header WITHOUT
-          touching those files and WITHOUT producing two visible H2s, we:
-            1. Render a sticky visible <h2> here that mirrors the active section.
-            2. Visually-hide the section's own internal <h2> via the scoped rule
-               below (editor-section-h2) — it stays in the DOM so each
-               <section aria-labelledby="sec-*"> still resolves, but only ONE H2
-               is visible per section (the sticky mirror).
-          The scroll container (max-h + overflow-y-auto) lets the section body
-          scroll under the solid sticky header.
-        */}
-        <div className="flex min-w-0 flex-col md:max-h-[calc(100vh-7rem)] md:overflow-y-auto">
-          <style>{`
-            .editor-section-h2 > section > h2:first-child {
-              position: absolute;
-              width: 1px; height: 1px;
-              padding: 0; margin: -1px;
-              overflow: hidden; clip: rect(0,0,0,0);
-              white-space: nowrap; border: 0;
-            }
-          `}</style>
-          <div className="sticky top-0 z-10 -mx-[var(--space-6)] mb-2 border-b-2 border-[var(--color-ink)] bg-[var(--color-paper)] px-[var(--space-6)] py-2">
-            <h2 className="text-xl font-bold">{activeLabel}</h2>
-          </div>
-          <div className="editor-section-h2">{form}</div>
+      {/* Desktop two-column: form (55%) + sticky preview */}
+      <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,55fr)_minmax(420px,45fr)]">
+        <div className="min-w-0">
+          <StageForm
+            stage={stage}
+            doc={store.doc}
+            update={updateFn}
+            renderAiAssist={renderAiAssist}
+            onBack={goBack}
+            onNext={goNext}
+            reviewBody={reviewBody}
+          />
         </div>
-
-        <div className="min-w-0">{previewPane}</div>
+        <div className="min-w-0">
+          <div className="lg:sticky lg:top-4">
+            <Preview resume={store.doc} appearance={appearance} />
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
-export { SECTIONS };
