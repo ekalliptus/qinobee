@@ -1,6 +1,7 @@
 import type { ResumeDocument, SkillGroup } from "@modules/resume/types";
 import { TextField, SelectField } from "./fields";
-import { TagList, ItemToolbar, BTN } from "./list-editors";
+import { TagList, BTN } from "./list-editors";
+import { AccordionItem, useAccordion, initialOpenIndex } from "./EntryAccordion";
 
 type Updater = (fn: (prev: ResumeDocument) => ResumeDocument) => void;
 
@@ -15,6 +16,7 @@ export default function SkillsSection(props: { doc: ResumeDocument; update: Upda
   const setGroups = (next: SkillGroup[]) => props.update((prev) => ({ ...prev, skillGroups: next }));
   const patchGroup = (i: number, patch: Partial<SkillGroup>) =>
     setGroups(groups.map((g, j) => (j === i ? { ...g, ...patch } : g)));
+  const acc = useAccordion(initialOpenIndex(groups.map((g) => g.skills.length > 0)));
 
   return (
     <section aria-labelledby="sec-skills" className="flex flex-col gap-6">
@@ -25,24 +27,19 @@ export default function SkillsSection(props: { doc: ResumeDocument; update: Upda
         {groups.map((g, i) => {
           const title = g.label || g.category;
           return (
-            <div
+            <AccordionItem
               key={i}
-              className="flex flex-col gap-3 border-2 border-[var(--color-ink)] rounded-[var(--radius)] p-4 bg-[var(--color-white)]"
+              index={i}
+              length={groups.length}
+              title={title}
+              open={acc.isOpen(i)}
+              onToggle={() => acc.toggle(i)}
+              itemLabel="skill group"
+              onReorder={(fn) => setGroups(fn(groups) as SkillGroup[])}
+              onDuplicate={() => setGroups([...groups.slice(0, i + 1), { ...g }, ...groups.slice(i + 1)])}
+              onDelete={() => setGroups(groups.filter((_, j) => j !== i))}
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-semibold capitalize text-[var(--color-ink)]" aria-hidden="true">
-                  {title}
-                </span>
-                <ItemToolbar
-                  index={i}
-                  length={groups.length}
-                  label="skill group"
-                  onReorder={(fn) => setGroups(fn(groups) as SkillGroup[])}
-                  onDuplicate={() => setGroups([...groups.slice(0, i + 1), { ...g }, ...groups.slice(i + 1)])}
-                  onDelete={() => setGroups(groups.filter((_, j) => j !== i))}
-                />
-              </div>
-
+              <div className="flex flex-col gap-3">
               <div className="grid gap-4 sm:grid-cols-2">
                 <SelectField
                   label="Category"
@@ -53,11 +50,19 @@ export default function SkillsSection(props: { doc: ResumeDocument; update: Upda
                 <TextField label="Label (optional)" value={g.label ?? ""} onChange={(v) => patchGroup(i, { label: v })} />
               </div>
               <TagList label="Skills" values={g.skills} onChange={(skills) => patchGroup(i, { skills })} />
-            </div>
+              </div>
+            </AccordionItem>
           );
         })}
       </div>
-      <button type="button" className={`${BTN} mt-2`} onClick={() => setGroups([...groups, emptyGroup()])}>
+      <button
+        type="button"
+        className={`${BTN} mt-2`}
+        onClick={() => {
+          setGroups([...groups, emptyGroup()]);
+          acc.open(groups.length);
+        }}
+      >
         Add skill group
       </button>
     </section>

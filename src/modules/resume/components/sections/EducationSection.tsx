@@ -1,6 +1,7 @@
 import type { ResumeDocument, Education } from "@modules/resume/types";
 import { TextField, TextArea, CheckboxField } from "./fields";
-import { ItemToolbar, BTN } from "./list-editors";
+import { BTN } from "./list-editors";
+import { AccordionItem, useAccordion, initialOpenIndex } from "./EntryAccordion";
 
 type Updater = (fn: (prev: ResumeDocument) => ResumeDocument) => void;
 
@@ -18,6 +19,7 @@ export default function EducationSection(props: { doc: ResumeDocument; update: U
   const setItems = (next: Education[]) => props.update((prev) => ({ ...prev, educations: next }));
   const patchItem = (i: number, patch: Partial<Education>) =>
     setItems(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
+  const acc = useAccordion(initialOpenIndex(items.map((e) => !!e.institution)));
 
   return (
     <section aria-labelledby="sec-edu" className="flex flex-col gap-6">
@@ -28,24 +30,19 @@ export default function EducationSection(props: { doc: ResumeDocument; update: U
         {items.map((it, i) => {
           const title = it.institution || it.degree ? `${it.institution}${it.degree ? ` · ${it.degree}` : ""}` : `Education ${i + 1}`;
           return (
-            <div
+            <AccordionItem
               key={i}
-              className="flex flex-col gap-3 border-2 border-[var(--color-ink)] rounded-[var(--radius)] p-4 bg-[var(--color-white)]"
+              index={i}
+              length={items.length}
+              title={title}
+              open={acc.isOpen(i)}
+              onToggle={() => acc.toggle(i)}
+              itemLabel="education"
+              onReorder={(fn) => setItems(fn(items) as Education[])}
+              onDuplicate={() => setItems([...items.slice(0, i + 1), { ...it }, ...items.slice(i + 1)])}
+              onDelete={() => setItems(items.filter((_, j) => j !== i))}
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-semibold text-[var(--color-ink)]" aria-hidden="true">
-                  {title}
-                </span>
-                <ItemToolbar
-                  index={i}
-                  length={items.length}
-                  label="education"
-                  onReorder={(fn) => setItems(fn(items) as Education[])}
-                  onDuplicate={() => setItems([...items.slice(0, i + 1), { ...it }, ...items.slice(i + 1)])}
-                  onDelete={() => setItems(items.filter((_, j) => j !== i))}
-                />
-              </div>
-
+              <div className="flex flex-col gap-3">
               <div className="grid gap-4 sm:grid-cols-2">
                 <TextField label="Institution" value={it.institution} onChange={(v) => patchItem(i, { institution: v })} />
                 <TextField label="Degree" value={it.degree ?? ""} onChange={(v) => patchItem(i, { degree: v })} />
@@ -85,11 +82,19 @@ export default function EducationSection(props: { doc: ResumeDocument; update: U
               />
               <TextArea label="Activities" rows={2} value={it.activities ?? ""} onChange={(v) => patchItem(i, { activities: v })} />
               <TextArea label="Description" rows={3} value={it.description ?? ""} onChange={(v) => patchItem(i, { description: v })} />
-            </div>
+              </div>
+            </AccordionItem>
           );
         })}
       </div>
-      <button type="button" className={`${BTN} mt-2`} onClick={() => setItems([...items, emptyEducation()])}>
+      <button
+        type="button"
+        className={`${BTN} mt-2`}
+        onClick={() => {
+          setItems([...items, emptyEducation()]);
+          acc.open(items.length);
+        }}
+      >
         Add education
       </button>
     </section>

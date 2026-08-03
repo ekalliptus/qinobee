@@ -1,7 +1,8 @@
 import type { ResumeDocument, WorkExperience } from "@modules/resume/types";
 import type { RenderAiAssist } from "../AiPanel";
 import { TextField, SelectField, CheckboxField } from "./fields";
-import { BulletList, TagList, ItemToolbar, BTN } from "./list-editors";
+import { BulletList, TagList, BTN } from "./list-editors";
+import { AccordionItem, useAccordion, initialOpenIndex } from "./EntryAccordion";
 
 type Updater = (fn: (prev: ResumeDocument) => ResumeDocument) => void;
 
@@ -43,6 +44,7 @@ export default function WorkExperienceSection(props: {
     props.update((prev) => ({ ...prev, workExperiences: next }));
   const patchItem = (i: number, patch: Partial<WorkExperience>) =>
     setItems(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
+  const acc = useAccordion(initialOpenIndex(items.map((w) => !!w.jobTitle && !!w.company)));
 
   return (
     <section aria-labelledby="sec-work" className="flex flex-col gap-6">
@@ -54,24 +56,19 @@ export default function WorkExperienceSection(props: {
           const title =
             it.jobTitle || it.company ? `${it.jobTitle}${it.company ? ` · ${it.company}` : ""}` : `Experience ${i + 1}`;
           return (
-            <div
+            <AccordionItem
               key={i}
-              className="flex flex-col gap-3 border-2 border-[var(--color-ink)] rounded-[var(--radius)] p-4 bg-[var(--color-white)]"
+              index={i}
+              length={items.length}
+              title={title}
+              open={acc.isOpen(i)}
+              onToggle={() => acc.toggle(i)}
+              itemLabel="experience"
+              onReorder={(fn) => setItems(fn(items) as WorkExperience[])}
+              onDuplicate={() => setItems([...items.slice(0, i + 1), { ...it }, ...items.slice(i + 1)])}
+              onDelete={() => setItems(items.filter((_, j) => j !== i))}
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-semibold text-[var(--color-ink)]" aria-hidden="true">
-                  {title}
-                </span>
-                <ItemToolbar
-                  index={i}
-                  length={items.length}
-                  label="experience"
-                  onReorder={(fn) => setItems(fn(items) as WorkExperience[])}
-                  onDuplicate={() => setItems([...items.slice(0, i + 1), { ...it }, ...items.slice(i + 1)])}
-                  onDelete={() => setItems(items.filter((_, j) => j !== i))}
-                />
-              </div>
-
+              <div className="flex flex-col gap-3">
               <div className="grid gap-4 sm:grid-cols-2">
                 <TextField label="Job title" value={it.jobTitle} onChange={(v) => patchItem(i, { jobTitle: v })} />
                 <TextField label="Company" value={it.company} onChange={(v) => patchItem(i, { company: v })} />
@@ -133,11 +130,19 @@ export default function WorkExperienceSection(props: {
                 }
               />
               <TagList label="Skills used" values={it.skillsUsed} onChange={(skillsUsed) => patchItem(i, { skillsUsed })} />
-            </div>
+              </div>
+            </AccordionItem>
           );
         })}
       </div>
-      <button type="button" className={`${BTN} mt-2`} onClick={() => setItems([...items, emptyExperience()])}>
+      <button
+        type="button"
+        className={`${BTN} mt-2`}
+        onClick={() => {
+          setItems([...items, emptyExperience()]);
+          acc.open(items.length);
+        }}
+      >
         Add experience
       </button>
     </section>
