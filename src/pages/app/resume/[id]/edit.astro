@@ -22,8 +22,7 @@ try {
 ---
 
 <BaseLayout meta={{ title: `Edit — ${doc.title}`, noindex: true }}>
-  <main id="main-content" class="mx-auto w-full max-w-6xl px-4 py-6">
-    <h1 class="mb-4 text-2xl font-bold">{doc.title}</h1>
+  <main id="main-content" class="mx-auto w-full max-w-[1600px] px-4 py-6">
     <ResumeEditor client:load initialDoc={doc} />
   </main>
 </BaseLayout>
