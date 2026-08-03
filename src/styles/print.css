@@ -4,14 +4,13 @@
   width: 210mm;
   min-height: 297mm;
   background: #ffffff;
-  box-shadow: var(--shadow-md);
   border: 1px solid var(--color-ink);
   margin: 0 auto;
 }
 
 /* Preview-only variant: a continuous content sheet that may grow beyond one A4
-   page. Drop the box-shadow here — the page-break separators provide visual
-   page edges instead, and a single shadow at the sheet bottom would look wrong. */
+   page. We remove the physical box properties here if we want to rely on the
+   dynamic background wrapper in React for visual paper limits. */
 .resume-page--flow {
   box-shadow: none;
 }

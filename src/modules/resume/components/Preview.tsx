@@ -173,16 +173,31 @@ function Preview(props: {
             position: "relative",
           }}
         >
-          {/* Kulit luar (kertas). Tingginya dipaksa kelipatan penuh halaman. */}
-          <div 
+          {/* Latar belakang kertas yang memanjang sesuai kelipatan halaman.
+              Diletakkan secara absolut di belakang konten agar tidak mempengaruhi
+              pengukuran isi konten yang ada di depannya. */}
+          <div
+            className="no-print"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              minHeight: `${pages * 297}mm`,
+              backgroundColor: "#ffffff",
+              border: "1px solid var(--color-ink)",
+              zIndex: 0,
+            }}
+          />
+
+          <div
+            ref={contentRef}
             className="resume-page resume-page--flow"
-            style={{ minHeight: `${pages * 297}mm` }}
+            style={{ position: "relative", zIndex: 1, backgroundColor: "transparent", border: "none" }}
           >
-            {/* Isi asli CV yang kita jadikan acuan ukuran (tanpa paksaan tinggi). */}
-            <div ref={contentRef}>
-              <TemplateStage resume={resume} />
-            </div>
+            <TemplateStage resume={resume} />
           </div>
+
           {boundaries.map((topMm, i) => (
             <div
               key={i}
