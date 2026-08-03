@@ -1,13 +1,9 @@
 ---
 import AppLayout from "@/layouts/AppLayout.astro";
-import NeoCard from "@components/ui/NeoCard.astro";
-import Button from "@components/ui/Button.astro";
-import Badge from "@components/ui/Badge.astro";
 import { getSqlDb } from "@lib/db/client";
 import { createResumeService } from "@modules/resume/services/resume-service";
 import { listTemplates } from "@modules/resume/templates/registry";
-import { features } from "@/config/features";
-import PdfImport from "@modules/resume/components/PdfImport";
+import CreateResumeFlow from "@modules/resume/components/CreateResumeFlow";
 
 export const prerender = false;
 
@@ -17,183 +13,14 @@ if (!user) return Astro.redirect("/login?next=/app/resume/new");
 const svc = createResumeService(getSqlDb(Astro.locals));
 const resumes = await svc.list(user.id);
 const templates = listTemplates();
-const hasResumes = resumes.length > 0;
 
-const fieldClass =
-  "min-h-[44px] w-full border-2 border-[var(--color-ink)] bg-[var(--color-white)] px-3";
+// Format resumes for the client component
+const resumeStubs = resumes.map((r) => ({ id: r.id, title: r.title }));
 ---
 
 <AppLayout meta={{ title: "Create a new CV" }}>
-  <div class="mx-auto max-w-3xl">
-    <h1 class="mb-6 text-2xl font-extrabold text-[var(--color-ink)]">Create a new CV</h1>
-
-    <!-- Starting point: only "scratch" is wired to the main form below.
-         Duplicate is its own no-JS form (the /duplicate endpoint routes by
-         path id, so each resume gets its own submit button). -->
-    <NeoCard class="mb-6 p-5">
-      <fieldset>
-        <legend class="mb-3 text-sm font-bold uppercase tracking-wide text-[var(--color-ink)]">
-          How do you want to start?
-        </legend>
-        <ul class="flex flex-col gap-3">
-          <li class="border-2 border-[var(--color-ink)] p-3">
-            <p class="font-semibold text-[var(--color-ink)]">Start from scratch</p>
-            <p class="text-sm text-[var(--color-ink)] opacity-70">
-              Pick a language, template, and name below, then start editing.
-            </p>
-          </li>
-
-          <li class="flex items-center justify-between gap-3 border-2 border-[var(--color-ink)] p-3 opacity-60">
-            <div>
-              <p class="font-semibold text-[var(--color-ink)]">Use career profile</p>
-              <p class="text-sm text-[var(--color-ink)]">Prefill from your saved profile.</p>
-            </div>
-            <Badge>Soon</Badge>
-          </li>
-
-          <li class="border-2 border-[var(--color-ink)] p-3">
-            {
-              hasResumes ? (
-                <form method="POST" class="flex flex-col gap-2">
-                  <p class="font-semibold text-[var(--color-ink)]">Duplicate existing CV</p>
-                  <p class="text-sm text-[var(--color-ink)] opacity-70">
-                    Copy one of your resumes as a starting point.
-                  </p>
-                  <ul class="mt-1 flex flex-col gap-2">
-                    {resumes.map((r) => (
-                      <li class="flex flex-wrap items-center justify-between gap-2">
-                        <span class="min-w-0 truncate text-sm text-[var(--color-ink)]">{r.title}</span>
-                        <button
-                          type="submit"
-                          formaction={`/api/resume/${r.id}/duplicate`}
-                          class="neo-button min-h-[44px] bg-[var(--color-white)] px-3 text-sm text-[var(--color-ink)]"
-                        >
-                          Duplicate
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </form>
-              ) : (
-                <div class="flex items-center justify-between gap-3 opacity-60">
-                  <div>
-                    <p class="font-semibold text-[var(--color-ink)]">Duplicate existing CV</p>
-                    <p class="text-sm text-[var(--color-ink)]">Available once you have a resume.</p>
-                  </div>
-                </div>
-              )
-            }
-          </li>
-
-          {
-            features.resumeUpload ? (
-              <li id="import" class="border-2 border-[var(--color-ink)] p-3">
-                <p class="font-semibold text-[var(--color-ink)]">Import from PDF</p>
-                <p class="text-sm text-[var(--color-ink)] opacity-70">
-                  Upload a CV PDF; we read the text and seed a draft you can review.
-                </p>
-                {/* I3: mount the client PDF-import island here. It extracts text in the
-                    browser and POSTs JSON to /api/resume/import, then navigates to the
-                    editor. Keep the id="pdf-import-slot" hook stable. */}
-                <div id="pdf-import-slot">
-                  <PdfImport client:visible />
-                  <noscript>
-                    <p class="mt-2 text-sm text-[var(--color-ink)] opacity-70">
-                      PDF import needs JavaScript to read your file in the browser. Enable
-                      JavaScript, or start from scratch below.
-                    </p>
-                  </noscript>
-                </div>
-              </li>
-            ) : (
-              <li class="flex items-center justify-between gap-3 border-2 border-[var(--color-ink)] p-3 opacity-60">
-                <div>
-                  <p class="font-semibold text-[var(--color-ink)]">Import from PDF</p>
-                  <p class="text-sm text-[var(--color-ink)]">Upload a CV PDF file.</p>
-                </div>
-                <Badge>Soon</Badge>
-              </li>
-            )
-          }
-        </ul>
-      </fieldset>
-    </NeoCard>
-
-    <!-- Main create form: pure native, works without JS. -->
-    <form method="POST" action="/api/resume/create" class="flex flex-col gap-6">
-      <input type="hidden" name="startingPoint" value="scratch" />
-
-      <NeoCard class="p-5">
-        <fieldset>
-          <legend class="mb-3 text-sm font-bold uppercase tracking-wide text-[var(--color-ink)]">
-            Language
-          </legend>
-          <div class="flex flex-wrap gap-3">
-            <label class="flex min-h-[44px] items-center gap-2 border-2 border-[var(--color-ink)] px-3">
-              <input type="radio" name="language" value="id" checked />
-              <span class="text-sm text-[var(--color-ink)]">Bahasa Indonesia</span>
-            </label>
-            <label class="flex min-h-[44px] items-center gap-2 border-2 border-[var(--color-ink)] px-3">
-              <input type="radio" name="language" value="en" />
-              <span class="text-sm text-[var(--color-ink)]">English</span>
-            </label>
-          </div>
-        </fieldset>
-      </NeoCard>
-
-      <NeoCard class="p-5">
-        <fieldset>
-          <legend class="mb-3 text-sm font-bold uppercase tracking-wide text-[var(--color-ink)]">
-            Template
-          </legend>
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {
-              templates.map((t) => (
-                <label class="flex cursor-pointer flex-col gap-2 border-2 border-[var(--color-ink)] p-3 has-[:checked]:bg-[var(--color-yellow)]">
-                  <span class="flex items-center gap-2">
-                    <input type="radio" name="templateId" value={t.id} checked={t.id === "essential"} />
-                    <span class="font-semibold text-[var(--color-ink)]">{t.name}</span>
-                  </span>
-                  <img
-                    src={t.thumbnail}
-                    alt=""
-                    width="120"
-                    height="160"
-                    loading="lazy"
-                    class="h-auto w-full border-2 border-[var(--color-ink)] bg-[var(--color-white)]"
-                  />
-                  <span class="text-xs uppercase tracking-wide text-[var(--color-ink)] opacity-70">
-                    {t.category}
-                  </span>
-                </label>
-              ))
-            }
-          </div>
-        </fieldset>
-      </NeoCard>
-
-      <NeoCard class="p-5">
-        <fieldset>
-          <legend class="mb-3 text-sm font-bold uppercase tracking-wide text-[var(--color-ink)]">
-            Name
-          </legend>
-          <label class="flex flex-col gap-1">
-            <span class="text-sm font-semibold text-[var(--color-ink)]">CV name</span>
-            <input
-              type="text"
-              name="title"
-              required
-              maxlength="160"
-              placeholder="Frontend Developer CV"
-              class={fieldClass}
-            />
-          </label>
-        </fieldset>
-      </NeoCard>
-
-      <div>
-        <Button type="submit" variant="primary" size="md">Create CV</Button>
-      </div>
-    </form>
+  <div class="mx-auto max-w-5xl">
+    <h1 class="mb-8 text-3xl font-extrabold text-[var(--color-ink)]">Create a new CV</h1>
+    <CreateResumeFlow resumes={resumeStubs} templates={templates} client:load />
   </div>
 </AppLayout>
