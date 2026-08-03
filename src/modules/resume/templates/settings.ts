@@ -39,7 +39,7 @@ export function resolveSettings(
     fontFamily: str(
       s["fontFamily"],
       defaults.fontFamily ??
-        "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+        "Arial, 'Helvetica Neue', Helvetica, sans-serif",
     ),
     fontScale: num(s["fontScale"], defaults.fontScale ?? 1),
     lineHeight: num(s["lineHeight"], defaults.lineHeight ?? 1.45),

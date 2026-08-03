@@ -12,9 +12,11 @@ const SIZE_STEPS = [
   { label: "L", value: 1.15 },
 ];
 const FONTS = [
-  { label: "Serif", value: "Georgia, 'Times New Roman', serif" },
-  { label: "Sans", value: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" },
-  { label: "Helvetica", value: "'Helvetica Neue', Helvetica, Arial, sans-serif" },
+  { label: "Arial / Helvetica", value: "Arial, 'Helvetica Neue', Helvetica, sans-serif" },
+  { label: "Calibri / Segoe", value: "Calibri, 'Segoe UI', Roboto, sans-serif" },
+  { label: "Georgia", value: "Georgia, serif" },
+  { label: "Times New Roman", value: "'Times New Roman', Times, serif" },
+  { label: "Garamond", value: "Garamond, serif" }
 ];
 const CTRL = "neo-input min-h-[44px] px-2 text-sm";
 

@@ -17,14 +17,13 @@ const BOUNDS = {
   margin: { min: 10, max: 25, step: 1 },
 } as const;
 
-/** Curated legible families (settings.ts accepts free-form; we offer a shortlist). */
+/** Curated legible ATS-friendly families. */
 const FONT_FAMILIES: { label: string; value: string }[] = [
-  { label: "System sans", value: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" },
-  { label: "Georgia serif", value: "Georgia, 'Times New Roman', serif" },
-  { label: "Helvetica", value: "'Helvetica Neue', Helvetica, Arial, sans-serif" },
-  { label: "Times", value: "'Times New Roman', Times, serif" },
-  { label: "Garamond", value: "Garamond, Georgia, serif" },
-  { label: "Monospace", value: "'SFMono-Regular', Menlo, Consolas, monospace" },
+  { label: "Arial / Helvetica", value: "Arial, 'Helvetica Neue', Helvetica, sans-serif" },
+  { label: "Calibri / Segoe", value: "Calibri, 'Segoe UI', Roboto, sans-serif" },
+  { label: "Georgia", value: "Georgia, serif" },
+  { label: "Times New Roman", value: "'Times New Roman', Times, serif" },
+  { label: "Garamond", value: "Garamond, serif" }
 ];
 
 /** Legible accent presets (all pass contrast on white). */
