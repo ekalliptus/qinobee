@@ -31,3 +31,6 @@ worker-configuration.d.ts
 
 # Local reference dump (not part of the app)
 contoh/
+
+# Local Kinobi reference dump (not part of the app)
+reff/
