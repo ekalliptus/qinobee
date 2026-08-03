@@ -106,54 +106,61 @@ export function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 motion-reduce:transition-none"
+      className="fixed inset-0 z-50 overflow-y-auto motion-reduce:transition-none"
       style={{ backgroundColor: "rgba(23,23,23,0.4)" }}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={`neo-card ${SIZE_CLASS[size]} w-full bg-[var(--color-white)]`}
+      <div 
+        className="flex min-h-full items-center justify-center p-4 sm:p-6"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
       >
-        <div className="flex items-start justify-between gap-4">
-          <h2 className="font-[var(--font-heading)] text-lg font-bold">
-            {title}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close dialog"
-            className="neo-button min-h-[44px] min-w-[44px] bg-[var(--color-white)] px-2 text-sm"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="mt-4 flex flex-col gap-4">{children}</div>
-
-        {primaryLabel && onPrimary ? (
-          <div className="mt-6 flex justify-end gap-2">
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          className={`neo-card ${SIZE_CLASS[size]} w-full bg-[var(--color-white)]`}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <h2 className="font-[var(--font-heading)] text-lg font-bold">
+              {title}
+            </h2>
             <button
               type="button"
               onClick={onClose}
-              className="neo-button min-h-[44px] px-4 bg-[var(--color-white)] text-sm"
+              aria-label="Close dialog"
+              className="neo-button min-h-[44px] min-w-[44px] bg-[var(--color-white)] px-2 text-sm"
             >
-              Cancel
-            </button>
-            <button
-              type="button"
-              data-dialog-primary
-              onClick={onPrimary}
-              className={`neo-button min-h-[44px] px-4 text-sm ${PRIMARY_BG[variant]}`}
-            >
-              {primaryLabel}
+              ×
             </button>
           </div>
-        ) : null}
+
+          <div className="mt-4 flex flex-col gap-4">{children}</div>
+
+          {primaryLabel && onPrimary ? (
+            <div className="mt-6 flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="neo-button min-h-[44px] px-4 bg-[var(--color-white)] text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                data-dialog-primary
+                onClick={onPrimary}
+                className={`neo-button min-h-[44px] px-4 text-sm ${PRIMARY_BG[variant]}`}
+              >
+                {primaryLabel}
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
