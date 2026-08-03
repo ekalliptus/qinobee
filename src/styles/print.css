@@ -23,31 +23,41 @@
   font-family: inherit;
 }
 
-/* Page-break guide (preview only). A very thin, subtle line that extends
-   outside the paper to act as a visual boundary marker, without disrupting
-   the text readability if it crosses a paragraph. */
+/* Page-break guide (preview only). A visible, thick divider band that simulates
+   the gap between two physical sheets of paper. It pushes text away from the
+   boundary so it never nempel (sticks) to the seam. */
 .preview-page-break {
   pointer-events: none;
-  height: 0;
-  border-top: 1px dashed rgba(23, 23, 23, 0.4);
+  height: 24px;
+  margin-top: -12px;
+  background: rgba(245, 245, 244, 0.9);
+  border-top: 2px solid var(--color-ink, #171717);
+  border-bottom: 2px solid var(--color-ink, #171717);
   position: relative;
-  z-index: 10;
+  z-index: 5;
 }
 .preview-page-break::before {
-  content: "PAGE " counter(page);
-  counter-increment: page;
+  content: "PAGE BREAK";
   position: absolute;
   top: 50%;
-  right: 100%;
-  margin-right: 8px;
-  transform: translateY(-50%);
-  background: transparent;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(245, 245, 244, 0.9);
+  padding: 0 8px;
   font-family: var(--font-mono, monospace);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: rgba(23, 23, 23, 0.5);
-  white-space: nowrap;
+  color: rgba(23, 23, 23, 0.6);
+}
+.preview-page-break::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 2px dashed rgba(23, 23, 23, 0.25);
+  transform: translateY(-50%);
 }
 
 @page {
