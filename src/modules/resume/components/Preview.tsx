@@ -203,7 +203,12 @@ function Preview(props: {
               key={i}
               className="no-print preview-page-break"
               aria-hidden="true"
-              style={{ position: "absolute", left: "-20mm", right: "-20mm", top: `${topMm}mm` }}
+              style={{
+                position: "absolute",
+                left: "-24px",
+                right: "-24px",
+                top: `${topMm}mm`,
+              }}
             />
           ))}
         </div>
