@@ -63,19 +63,22 @@ function Preview(props: {
     if (!content || !viewport || typeof ResizeObserver === "undefined") return;
 
     const measure = () => {
-      const px = content.getBoundingClientRect().height / (zoomRef.current || 1);
+      // Use scrollHeight (layout size, pre-zoom) instead of getBoundingClientRect
+      // (screen size, post-zoom). This avoids zoom-division rounding errors when
+      // the measurement container is inside a zoomed parent.
+      const px = content.scrollHeight;
+      const widthPx = content.scrollWidth;
       setHeightMm(pxToMm(px));
       if (fitRef.current === "width" || fitRef.current === "page") {
         const availPx = viewport.clientWidth - 48; // p-6 padding budget
-        const a4wPx = content.getBoundingClientRect().width / (zoomRef.current || 1);
-        const fitWidthScale = availPx / a4wPx;
+        const fitWidthScale = availPx / widthPx;
         // Readable floor: computed fit never goes microscopic (manual +/- can).
         let next = Math.max(fitWidthScale, 0.62);
         if (fitRef.current === "page") {
           // Fit ONE A4 page height into the viewport (not the full content, which
           // may span multiple pages). A4 height in px at the current content scale.
           const availH = viewport.clientHeight - 48;
-          const a4hPx = (297 * a4wPx) / 210; // preserve aspect ratio
+          const a4hPx = (297 * widthPx) / 210; // preserve aspect ratio
           next = Math.min(next, availH / a4hPx);
         }
         setZoom(clampZoom(next));
@@ -167,13 +170,17 @@ function Preview(props: {
           }}
         >
           {/* Hidden measurement container: renders content once to measure
-              natural height. Uses ResizeObserver to track changes. */}
+              natural height. Positioned on-screen (not off-screen) so the
+              browser doesn't skip rendering it, but visually hidden. */}
           <div
             style={{
               position: "absolute",
-              left: "-9999px",
               top: 0,
+              left: 0,
               width: `${A4_WIDTH_MM}mm`,
+              opacity: 0,
+              pointerEvents: "none",
+              zIndex: -1,
             }}
           >
             <div ref={contentRef}>
