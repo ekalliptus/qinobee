@@ -159,58 +159,85 @@ function Preview(props: {
         ref={viewportRef}
         className="relative w-full overflow-auto bg-[var(--color-muted)] p-6 md:max-h-[calc(100vh-7rem)]"
       >
-        {/* Scale with CSS `zoom` (not `transform`): zoom scales the LAYOUT box
-            too, so height:auto grows with content, `margin:0 auto` centers, and
-            a multi-page CV becomes a genuinely tall, scrollable page. `transform`
-            would keep the unscaled layout height and clip/mis-scroll. Page-break
-            separators sit every 297mm inside the page (pre-zoom units) so they
-            align with each A4 boundary and scale with zoom. */}
         <div
           style={{
             zoom,
             width: `${A4_WIDTH_MM}mm`,
             margin: "0 auto",
-            position: "relative",
           }}
         >
-          {/* Latar belakang kertas yang memanjang sesuai kelipatan halaman.
-              Diletakkan secara absolut di belakang konten agar tidak mempengaruhi
-              pengukuran isi konten yang ada di depannya. */}
+          {/* Hidden measurement container: renders content once to measure
+              natural height. Uses ResizeObserver to track changes. */}
           <div
-            className="no-print"
             style={{
               position: "absolute",
+              left: "-9999px",
               top: 0,
-              left: 0,
-              right: 0,
-              minHeight: `${pages * 297}mm`,
-              backgroundColor: "#ffffff",
-              border: "1px solid var(--color-ink)",
-              zIndex: 0,
+              width: `${A4_WIDTH_MM}mm`,
             }}
-          />
-
-          <div
-            ref={contentRef}
-            className="resume-page resume-page--flow"
-            style={{ position: "relative", zIndex: 1, backgroundColor: "transparent", border: "none" }}
           >
-            <TemplateStage resume={resume} />
+            <div ref={contentRef}>
+              <TemplateStage resume={resume} />
+            </div>
           </div>
 
-          {boundaries.map((topMm, i) => (
-            <div
-              key={i}
-              className="no-print preview-page-break"
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                left: "-24px",
-                right: "-24px",
-                top: `${topMm}mm`,
-              }}
-            />
-          ))}
+          {/* Page windows: each is a clipped A4 sheet (overflow:hidden,
+              height:297mm). The SAME content is rendered inside each window
+              but translated up by (pageIndex * 297mm) so only the correct
+              slice is visible. This is how pro resume builders handle
+              multi-page previews without a JS pagination engine. */}
+          {pages > 0 && heightMm != null
+            ? Array.from({ length: pages }, (_, pageIndex) => (
+                <div key={pageIndex} className="flex flex-col items-center">
+                  {pageIndex > 0 ? (
+                    <div
+                      className="no-print flex w-full items-center justify-center"
+                      style={{
+                        height: "24px",
+                        background: "transparent",
+                        borderTop: "1px dashed rgba(23,23,23,0.15)",
+                        borderBottom: "1px dashed rgba(23,23,23,0.15)",
+                        position: "relative",
+                      }}
+                    >
+                      <span
+                        style={{
+                          background: "var(--color-muted, #f5f5f4)",
+                          padding: "0 12px",
+                          fontFamily: "var(--font-mono, monospace)",
+                          fontSize: "9px",
+                          fontWeight: 700,
+                          letterSpacing: "0.2em",
+                          color: "rgba(23,23,23,0.3)",
+                        }}
+                      >
+                        PAGE BREAK
+                      </span>
+                    </div>
+                  ) : null}
+                  <div
+                    className="resume-page"
+                    style={{
+                      width: `${A4_WIDTH_MM}mm`,
+                      height: "297mm",
+                      overflow: "hidden",
+                      position: "relative",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: `${-pageIndex * A4_PAGE_MM}mm`,
+                        left: 0,
+                        right: 0,
+                      }}
+                    >
+                      <TemplateStage resume={resume} />
+                    </div>
+                  </div>
+                </div>
+              ))
+            : null}
         </div>
       </div>
     </div>
