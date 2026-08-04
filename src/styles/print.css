@@ -23,16 +23,16 @@
   font-family: inherit;
 }
 
-/* Page-break gap (preview only). Sits OUTSIDE the paper (bleeds into the grey
-   background area) so it never covers CV text. The thick band + label clearly
-   marks where page 1 ends and page 2 begins, mimicking stacked A4 sheets. */
+/* Page-break gap (preview only). Fully OPAQUE band that hides text behind it,
+   creating the illusion that page-1 text stops and page-2 text starts with real
+   empty space in between — like stacked A4 sheets with a gap. */
 .preview-page-break {
   pointer-events: none;
-  height: 28px;
-  margin-top: -14px;
+  height: 40px;
+  margin-top: -20px;
   background: var(--color-muted, #f5f5f4);
-  border-top: 2px solid var(--color-ink, #171717);
-  border-bottom: 2px solid var(--color-ink, #171717);
+  border-top: 1px solid rgba(23, 23, 23, 0.2);
+  border-bottom: 1px solid rgba(23, 23, 23, 0.2);
   position: relative;
   z-index: 10;
 }
@@ -43,12 +43,13 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background: var(--color-muted, #f5f5f4);
-  padding: 0 12px;
+  padding: 2px 16px;
   font-family: var(--font-mono, monospace);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.15em;
-  color: rgba(23, 23, 23, 0.4);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(23, 23, 23, 0.35);
   white-space: nowrap;
 }
 
