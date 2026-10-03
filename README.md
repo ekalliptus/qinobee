@@ -30,12 +30,12 @@ bun run build
 bun run preview
 ```
 
-- `bun run dev` — Astro dev server at http://localhost:4321
-- `bun run check` — `astro check` (TypeScript + Astro diagnostics)
-- `bun test` — Bun test runner (tests colocated under `tests/`)
-- `bun run build` — `astro check && astro build` (Node standalone server output in `dist/`)
-- `bun run preview` — serve the production build locally
-- `bun run format` / `bun run format:check` — Prettier
+- `bun run dev`: Astro dev server at http://localhost:4321
+- `bun run check`: `astro check` (TypeScript + Astro diagnostics)
+- `bun test`: Bun test runner (tests colocated under `tests/`)
+- `bun run build`: `astro check && astro build` (Node standalone server output in `dist/`)
+- `bun run preview`: serve the production build locally
+- `bun run format` / `bun run format:check`: Prettier
 
 The SQLite database file is created automatically on first run at `DATABASE_URL`
 (default `./data/qinobee.sqlite`); tables are migrated at startup. WAL mode and foreign keys are
@@ -45,7 +45,7 @@ enabled.
 
 Copy `.env.example` to `.env`. **Only variables prefixed `PUBLIC_` are exposed to the browser.**
 Everything else is server-only and must never be shipped to the client. In particular, **`AI_API_KEY`
-must never be exposed to the browser** — all AI calls happen server-side.
+must never be exposed to the browser**: all AI calls happen server-side.
 
 | Variable              | Purpose                                                              | Required?                                             |
 | --------------------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
@@ -88,7 +88,7 @@ must never be exposed to the browser** — all AI calls happen server-side.
 - Print-to-PDF export page (browser "Save as PDF").
 - i18n dictionaries (en/id) with fallback; SEO meta + JSON-LD helpers.
 
-**Deferred / not built** — see [docs/REMAINING-INTEGRATIONS.md](docs/REMAINING-INTEGRATIONS.md).
+**Deferred / not built**, see [docs/REMAINING-INTEGRATIONS.md](docs/REMAINING-INTEGRATIONS.md).
 Notable: public resume sharing, cover-letter builder, full version-history UI, pointer
 drag-and-drop (keyboard reorder ships), server-side Chromium PDF, OAuth/SSO, production
 Postgres/Supabase, employer/mentor/admin workflows, and most `/app` sub-pages beyond dashboard +
@@ -121,7 +121,7 @@ Architecture details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 The app runs on **Cloudflare Workers** with **D1** (SQLite) via the `@astrojs/cloudflare` adapter.
 Persistence uses an async `SqlDb` adapter (`src/lib/db/`); D1 is resolved per-request from the
 `cloudflare:workers` `env` binding. All crypto is Web Crypto (PBKDF2 passwords, SHA-256 session
-token hashing, HMAC webhook signatures) — no Bun/Node-only APIs at runtime.
+token hashing, HMAC webhook signatures), no Bun/Node-only APIs at runtime.
 
 Live: **https://qinobee.ekalliptus.workers.dev**
 
@@ -142,17 +142,17 @@ bunx wrangler deploy
 
 - Binding name must be `DB` (see `wrangler.jsonc`). Non-secret vars (`AI_BASE_URL`, `AI_MODEL`,
   `PUBLIC_SITE_URL`) live in `wrangler.jsonc` `vars`.
-- Secrets: set only if used — `bunx wrangler secret put AI_API_KEY` (optional; without it AI uses the
+- Secrets: set only if used: `bunx wrangler secret put AI_API_KEY` (optional; without it AI uses the
   rule-based fallback). `AUTH_SECRET` is declared for future CSRF use but not yet referenced in code.
 - The Cloudflare adapter also provisions a `SESSION` KV namespace and an `IMAGES` binding on first
-  deploy (Astro session storage / image service) — expected.
+  deploy (Astro session storage / image service), expected.
 - Local dev: `bun run dev` (the adapter's Vite plugin provides a D1-local binding from
   `wrangler.jsonc`). Tests use an in-memory `bun:sqlite` `SqlDb` adapter and never touch D1.
 - Schema is applied via wrangler migrations (not at runtime). Keep `src/lib/db/schema.ts`,
   `src/lib/db/schema.sql`, and `migrations/0001_init.sql` in sync (single source of truth noted in
   each file).
 
-Note: `worker-configuration.d.ts` (from `wrangler types`) is gitignored and excluded from tsconfig —
+Note: `worker-configuration.d.ts` (from `wrangler types`) is gitignored and excluded from tsconfig:
 its global worker types clobber the DOM lib inside React islands. The project uses minimal local D1
 types in `src/lib/db/` instead.
 
@@ -164,4 +164,4 @@ Run `bun test`. Tests are colocated under `tests/` (unit + integration, using `:
 
 ## License
 
-No license file is present yet — **add a license** before distributing.
+Distributed under the MIT license. See [LICENSE](LICENSE).
